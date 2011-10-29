@@ -1,0 +1,78 @@
+#! /usr/bin/env sh
+
+export LC_ALL
+LC_ALL=C
+umask 022
+
+proj="squash_dir"
+
+Echo() {
+	printf '%s\n' "${*}"
+}
+
+Eecho() {
+	Echo "# ${*}"
+}
+
+Exec() {
+	Eecho "${*}"
+	"${@}"
+}
+
+Usage() {
+	Echo "Usage: ${0##*/}
+Marks a new release in the git repository.
+Verify in advance to have AC_INIT set correctly in configure.ac"
+	exit ${1:-1}
+}
+
+Die() {
+	printf '%s: %s\n' "${0##*/}" "${1}" >&2
+	exit ${2:-1}
+}
+
+Warn() {
+	wret="${?}"
+	printf '%s: warning: %s\n' "${0##*/}" "${1}" >&2
+	return ${wret}
+}
+
+ExecWarn() {
+	Exec "${@}" || Warn "${*} failed: ${?}"
+}
+
+ExecDie() {
+	Exec "${@}" || Die "${*} failed" ${?}
+}
+
+[ ${#} -eq 0 ] || Usage
+
+test -f mk/release || Die "You must be in the parent directory of ./mk"
+ver="`sed -ne 's/^[[:space:]]*AC_INIT[[:space:]]*([^,]*,[[:space:][]*\([^],[:space:]]*\).*$/\1/p' configure.ac`"
+
+keycheck() {
+	printf '%s' "${*}? (y/n) "
+	while :
+	do	t="`stty -g`"
+		stty -icanon -echo
+		a="`dd count=1 bs=1 2>/dev/null`" || a=''
+		stty ${t}
+		case "${a}" in
+		n*|N*)	printf '%s\n' "No"
+			exit 1
+			;;
+		y*|Y*)	printf '%s\n' "Yes"
+			return
+			;;
+		esac
+	done
+}
+
+keycheck "Are you sure you want to tag ${proj}-${ver}"
+Eecho "git tag -a release-${ver} -m ..."
+git tag -a "release-${ver}" \
+	-m "Tagging the ${ver} release of the ${proj} project" || \
+		Die "git tagging failed"
+ExecWarn git repack
+ExecWarn git prune
+ExecWarn git gc

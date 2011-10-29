@@ -1,0 +1,90 @@
+#! /usr/bin/env sh
+
+export LC_ALL
+LC_ALL=C
+
+Die () {
+	printf '%s: %s\n' "${0##*/}" "${1}" >&2
+	exit ${2:-1}
+}
+
+[ "`id -u`" -eq 0 ] || Die "only root may execute this script"
+curr='.'
+
+distdir="`portageq distdir`"
+[ -n "${distdir}" ] && test -d "${distdir}" || Die "cannot determine DISTDIR"
+
+GetEdir () {
+	local o i j
+	o="`portageq portdir_overlay`"
+	for i in ${o}
+	do	edir="${i}/sys-fs/squash_dir"
+		test -d "${edir}" || continue
+		test -r "${i}/profiles/repo_name" \
+		&& repo_name=`cat -- "${i}"/profiles/repo_name` \
+		|| repo_name=''
+		return 0
+	done
+	return 1
+}
+GetEdir || Die "cannot find sys-fs/squash_dir in overlay.
+You need at least an empty directory by that name in the overlay
+so that this script knows where to install the ebuild."
+
+MoveEbuild () {
+	local k n
+	test -f "${1}" && return
+	n=''
+	for k in "${edir}"/squash_dir-*.ebuild
+	do	case "${k}" in
+		*999.ebuild)	continue;;
+		esac
+		test -f "${k}" && n="${k}"
+	done
+	[ -n "${n}" ] || return
+	printf '%s\n' "Moving ${n} -> ${1##*/}"
+	mv -- "${n}" "${1}" || Die "cannot mv ${n} ${1}"
+}
+
+RmOpt () {
+	! test -f "${1}" || rm -- "${1}"
+}
+
+InstallEbuildVersion () {
+	chown portage:portage -- "${1}"
+	chmod 664 -- "${1}"
+	printf '%s\n' "Moving ${1} -> ${distdir}"
+	mv -- "${1}" "${distdir}/${1##*/}"
+	MoveEbuild "${edir}/squash_dir-${2}.ebuild" || \
+		Die "failed to create ${edir}"
+	(	cd -- "${edir}" || Die "cannot change to ${edir}"
+		RmOpt "Manifest" || Die "cannot remove Manifest"
+		printf '%s\n' "ebuild ${edir}/squash_dir-${2}.ebuild manifest"
+		ebuild -- "squash_dir-${2}.ebuild" manifest \
+			|| Die "ebuild failed"
+	) || exit
+	if [ -n "${repo_name}" ] && command -v egencache >/dev/null 2>&1
+	then	printf '%s\n' "egencache --repo=${repo_name} --update"
+		egencache --repo="${repo_name}" --update || \
+			Die "egencache failed"
+	fi
+	printf '%s\n' "emerge -1 =sys-fs/squash_dir-${2}"
+	exec emerge -1 -- "=sys-fs/squash_dir-${2}"
+	Die "cannot execute emerge"
+}
+
+DoFirst () {
+	local i j v
+	for j in tar.xz tar.lzma tar.bz2 tar.gz zip tar.Z shar.gz shar
+	do	for i in "${curr}"/squash_dir-*."${j}"
+		do	test -e "${i}" || continue
+			v="${i##*/squash_dir-}"
+			v=${v%".${j}"}
+			InstallEbuildVersion "${i}" "${v}"
+			return
+		done
+	done
+	Die "No tarball found in ${curr}"
+}
+
+DoFirst || exit

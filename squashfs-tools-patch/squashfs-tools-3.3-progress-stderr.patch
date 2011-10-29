@@ -1,0 +1,26 @@
+--- squashfs-tools/mksquashfs.c
++++ squashfs-tools/mksquashfs.c
+@@ -1832,17 +1832,17 @@
+ 	if(!progress || columns - used < 0)
+ 		return;
+ 
+-	printf("\r[");
++	fprintf(stderr, "\r[");
+ 
+ 	while (hashes --)
+-		putchar('=');
++		putc('=', stderr);
+ 
+ 	while(spaces --)
+-		putchar(' ');
++		putc(' ', stderr);
+ 
+-	printf("] %*lld/%*lld", max_digits, current, max_digits, max);
+-	printf(" %3lld%%", current * 100 / max);
+-	fflush(stdout);
++	fprintf(stderr, "] %*lld/%*lld", max_digits, current, max_digits, max);
++	fprintf(stderr, " %3lld%%", current * 100 / max);
++	fflush(stderr);
+ }
+ 
+ 

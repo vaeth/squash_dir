@@ -1,0 +1,4 @@
+#! /usr/bin/env sh
+export LC_ALL
+LC_ALL=C
+exec mk/make maintainer-clean

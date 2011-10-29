@@ -1,0 +1,600 @@
+
+(C) Martin Väth <martin@mvath.de>
+The license of this package is the GNU Public License GPL-2.
+
+What is this project?
+=====================
+
+This is essentially an initscript for openrc/Gentoo which allows to keep a
+directory compressed by squashfs but simultaneously allows to write on it
+using some of (depending on the configuration and what is available):
+
+	aufs or aufs2 (see http://aufs.sourceforge.net)
+	unionfs-fuse (http://podgorny.cz/moin/UnionFsFuse)
+	unionfs (see http://www.fsl.cs.sunysb.edu/project-unionfs.html)
+	funionfs (http://bugs.gentoo.org/show_bug.cgi?id=151673)
+
+The idea is that on shutdown the data is recompressed
+(and the temporary modified data removed).
+This approach is originally due to synss' script from
+	http://forums.gentoo.org/viewtopic-t-465367-highlight-.html
+In that forum thread you can also ask for help about this project.
+
+If the Gentoo portage tree /usr/portage is compressed this way
+(without DISTDIR which you should store somewhere else when using this script),
+the required disk space is only about 50 MB (instead of about 180 MB,
+the actual space requirement depending essentially on the filesystem),
+and usually the access is even faster.
+
+Requirements
+============
+
+The script requires of course that squashfs support is activated in the
+kernel, that the mksquashfs tool is available, and also that some of the
+above mentioned unionfs-type tools is available and supported by the kernel.
+Moreover, a POSIX shell and "find" are needed with the following extensions
+(which are not yet POSIX):
+	(a) The "find" command must know the -path option.
+	(b) The shell must know the keyword "local".
+	(c) A mktemp program must be available in the path.
+	(d) flock unless you disable file locking using LOCKFILE="none".
+Some standard tools like /bin/false are also assumed (if /bin/false is missing,
+it is also ok, but it must not do something else than return bad status).
+Of course, for the case that you use the FILE_TBZ feature, also the
+corresponding TARCMD and its requirement (like tar+bzip2) must exist.
+
+Main Example:
+=============
+
+In this example, it is assumed that you have already installed/copied the
+/etc/init.d/squash_dir script and that you want to keep the three directories
+/usr/portage, /var/db, and /usr/share/texmf-dist compressed
+(as a remark: other good candidates for compression are the kernel sources
+and on some systems also /usr/share/games).
+Create three symbolic links:
+	ln -s squash_dir /etc/init.d/squash_portage
+	ln -s squash_dir /etc/init.d/squash_db
+	ln -s squash_dir /etc/init.d/squash_tex
+You have to create the corresponding three config-files of the same name
+in /etc/conf.d/
+Here are typical examples of the content of these files:
+
+/etc/conf.d/squash_portage:
+DIRECTORY="/usr/portage"
+DIR_CHANGE="${DIRECTORY}.changes"
+DIR_SQUASH="${DIRECTORY}.readonly"
+THRESHOLD=40000
+
+/etc/conf.d/squash_tex:
+DIRECTORY="/usr/share/texmf-dist"
+DIR_CHANGE="${DIRECTORY}.changes"
+DIR_SQUASH="${DIRECTORY}.readonly"
+IGNORETOUCH="ls-R"
+
+/etc/conf.d/squash_db:
+DIRECTORY="/var/db"
+FILE_SQFS_OLD="${DIRECTORY}.sqfs.bak"
+DIR_CHANGE="${DIRECTORY}.changes"
+DIR_SQUASH="${DIRECTORY}.readonly"
+THRESHOLD=1000
+
+The meaning of this configuration data is the following:
+The first line determines the directory you want to keep compressed and
+be writable; the corresponding compressed data will be expected/created
+in the file ${DIRECTORY}.sqfs (e.g. in /usr/share/portage.sqfs).
+Moreover, later, there will be auxiliary directories ${DIRECTORY}.changes
+and ${DIRECTORIES}.readonly available. The latter is the content of
+the compressed data without any modifications (this directory is readonly),
+and the former contains the modified files (and some metadata, depending
+on which of aufs|unionfs-fuse|unionfs|funionfs you are using).
+The THRESHOLD value means that your changes will not be compressed on every
+shutdown but only if ${DIRECTORY}.changes gets large enough.
+Moreover, the IGNORETOUCH-value in squash_tex means that changes only in
+the date of the file /usr/share/texmf-dist/ls-R should not cause a
+recompression on shutdown (this file is usually often recreated with the
+same content, and so if nothing else happens, it is reasonable to ignore
+this change).
+Finally, the FILE_SQFS_OLD value in /etc/conf.d/squash_db means that a
+backup should always be kept of the previous compressed data for /var/db;
+this is for security reasons, since that directory is rather vital to
+your system (the other two directories could be re-synced resp. re-emerged
+in case something bad happens, but if /var/db is lost you have practically
+completely messed up your system).
+
+Now to actually make these settings active start the initscripts.
+You can do this manually in the classical way using
+	/etc/init.d/squash_portage start
+	/etc/init.d/squash_tex start
+	/etc/init.d/squash_db start
+or in a more convenient way using the "squash-dir" (observe: "-")
+command line interface to start them all with only one command:
+	squash-dir start
+or
+	squash-dir start portage tex db
+(this assumes of course that squash-dir was copied in a directory of PATH).
+
+Be very careful that you made no mistake before, when you make this step!
+The starting of the initscripts will create the corresponding
+squashed files and *clean* the directories (i.e. if you want to undo this
+change for some reason using unsquashfs on the created files, you might
+have lost some information permanently like e.g. hard-links within the
+cleaned directories).
+
+If the above step appears to dangerous to you, you can of course also
+create the file manually
+	mksquashfs /usr/portage /usr/portage.sqfs
+	mksquashfs /usr/share/texmf-dist /usr/share/texmf-dist.sqfs
+	mksquashfs /var/db /var/db.sqfs
+and if this was successful, for testing only *move* the corresponding
+directories
+	/usr/portage /usr/share/texmf-dist /var/db
+somewhere else; actually, the latter is not mandatory: The directories will
+just get "over-mounted", i.e. you will not see the previous content anymore.
+
+If the squashed file exists (i.e. if you created them manually using
+mksquashfs), you can start the initscript (manually or using squash-dir)
+safely, i.e. in this case $DIRECTORY will not get cleaned automatically.
+
+In order to start the initscripts also on the next boot, add them
+to your default runlevel
+	rc-config add squash_portage default
+	rc-config add squash_tex default
+	rc-config add squash_db default
+
+When you shutdown the computer (more precisely: When the above initscripts
+are stopped) any modifications to the directories are recompressed
+(unless the THRESHOLD is not reached or the touching of
+/usr/share/texmf-dist/ls-R was the only modification).
+
+In some situations you might want to recompress the directories even
+before you shutdown the system (or perhaps even if the THRESHOLD is not
+yet reached or no serious modifications were done). In this case you
+can also use the "squash-dir" command line interface with corresponding
+parameters (calling the interface without parameters shows the options).
+
+Squashing the portage tree /usr/portage has two important consequences:
+
+1. You almost certainly want to keep $DISTDIR in a different directory
+   in advance: It makes no sense (i.e. it costs enormous time and needs lot
+   of temporary diskspace without much gain) to compress compressed tarballs.
+   Hence:
+   Move /usr/portage/distdir to some other place (outside the /usr/portage
+   hierarchy) and modify DISTDIR in /etc/make.conf correspondingly,
+   before you start the initscripts for the first time.
+
+2. At the time of writing this (sys-fs/unionfs-fuse-0.23 is current) there
+   is a problem if you use unionfs-fuse for the portage tree:
+   When files are removed from $DIRECTORY, there will appear a directory
+   $DIRECTORY/.unionfs with "magic" content. You should not touch the content
+   of that directory manually unless you know what you are doing.
+   Unfortunately, emerge --sync (or eix-sync) will by default not know this
+   and try to remove that directory with rather chaotic consequences.
+   For that reason you must tell emerge --sync to leave this directory alone:
+   This can be done by adding to /etc/make.conf the line
+
+PORTAGE_RSYNC_EXTRA_OPTS="${PORTAGE_RSYNC_EXTRA_OPTS} --exclude=/.unionfs"
+
+   When there is version of unionfs-fuse which provides an option to hide
+   $DIRECTORY/.unionfs, probably squash_dir will get updated to use that
+   option; in this case, the above line is not necessary (but it won't hurt
+   either).
+
+A Word of None-Warning
+======================
+
+It is in general rather safe to squash a directory, even a rather vital one:
+Even if e.g. you boot from a kernel which has no support for some of
+aufs|unionfs-fuse|unionfs|funionfs to make the directory writable,
+the script will mount it at least as read-only (using "mount --bind" if
+necessary). Moreover, if everything goes wrong you can still use "unsquashfs"
+to unpack the directory manually.
+Probably the only danger in packing "strange" directories are special files
+like hard links (this information will usually get lost) or special devices
+which are perhaps not supported by the used tools.
+
+Modules and Mounting
+====================
+
+If you compiled squashfs, aufs, or fuse as modules, you should modprobe
+these modules first (or even better put them into /etc/conf.d/modules
+when you use openrc or, when you use the old baselayout-1,
+put them into /etc/modules.autoload.d/foo).
+squash_dir will make no attempt to load the modules (unless this happens
+automatically by the corresponding mount program): The script will just
+attempt to mount the directories using the corresponding tool and
+will check its return status for success.
+If the mount fails, the next tool is attempted for mounting, until one
+succeeds (the order and which tools are attempted can be influenced using
+the ORDER variable described below).
+If no tool succeeds, it is attempted to use "mount --bind" to get
+the directory at least readonly on the expected place, so even in
+this bad situation (which probably only happens if you boot from an
+experimental kernel or a brand new kernel without corresponding support)
+you can still access the directory read-only. Hence, also rather vital
+directories can be compress as long as it is not vital to write to them
+(and as long as the relevant programs for mounting etc. are not contained
+withing these directories, of course).
+
+Patching squashfs-tools
+=======================
+
+The squash_dir package also provides a patch for squashfs-tools (which
+might optionally be activated by "make install" resp. by the ebuild).
+This patch causes mksquashfs to redirect its progress bar to stderr
+(instead of stdout) so that you can see the progress bar when running
+the initscript. Cf. the description of the VERBOSE_MODE variable for details.
+
+Call of the Initscripts
+=======================
+
+Besides the usual options like start/stop/restart, there are also
+helper options for the /etc/init.d/squash_* scripts which are meant to be
+used from other scripts (for example, they are used by the "squash-dir"
+command line interface).
+
+will_squash: returns true/false (and a corresponding message unless -q is
+             used) depending on whether the stop operation would re-squash.
+need_squash: returns true/false depending on whether new data was written.
+             (If no $MAGIC_FILE exists - see below - this is the same as
+             will_squash).
+have_magic:  returns true/false depending on whether $MAGIC_FILE exists
+print_dir_change: outputs the effective path to DIR_CHANGE to stderr,
+             taking the temporary name feature into account (see below).
+print_dir_squash: outputs the effective path to DIR_SQUASH to stderr,
+             taking the temporary name feature into account (see below).
+
+Unfortunately, the return value of initscripts is ignored with openrc.
+Therefore, the answer ("1" for true, "0" for false) for the first three
+functions is written to stderr instead of being passed as an exit status.
+For the directory names of the print_dir_* options a "/" is appended to
+make it easier for calling scripts to deal with trailing spaces.
+
+Variables (Configuration in /etc/conf.d/squash_*)
+=================================================
+
+The subsequent variables can be defined in /etc/conf.d/squash_*
+Three values are mandatory:
+DIRECTORY *must* be defined and usually you will want to specify at least
+DIR_CHANGE and probably also DIR_SQUASH; for the others, default values
+are assumed as described below.
+
+The corresponding directories will be created if they do not exist.
+Some variables support the "temporary name feature". This means that a path
+ending with XXXXXX (like e.g. /tmp/squash_foo.XXXXXXXX) is transformed into
+a corresponding file/directoryname using mktemp (or mktemp -d, respectively)
+when it is used.
+Using paths in world-writable directories (e.g. /tmp or /dev/shm)
+for some data is a security risk and therefore strongly discouraged.
+An exception of this rule is of course for those paths for which you use
+the temporary name feature which is handled safely - that's why this feature
+was introduced.
+
+DIRECTORY
+	The directory where the squashed filesystem should finally
+	be mounted, i.e. the path of the "original" directory.
+	If you want to use this script to compress your portage tree,
+	it might be a good idea to set this variables with
+	DIRECTORY="$(. /etc/make.conf ; echo "${PORTDIR}")"
+
+	The only restriction concerning DIRECTORY is that none of
+	the following files or directories should reside within this
+	directory.
+	Note that you will get problems if you squash a directory
+	containing data needed to run this script (e.g. the
+	kernel module for squashfs or - if you ever plan to upgrade
+	your kernel - tools to build the kernel modules) because you
+	can of course not access the squash'ed directory until this
+	script was successfully started...
+
+TMPDIR
+	This variable is only used in the defaults of the following
+	variables. If you leave it empty, it defaults to /tmp
+
+DIR_CHANGE
+	The directory where the modifications of DIRECTORY will go.
+	This should be on a partition where you have sufficient space.
+	This variable supports the temporary name feature described
+	above. However, you should use a temporary directory or a
+	ramdisk only if your changes to DIRECTORY will always only
+	be temporary, i.e. if you are really prepared to loose your
+	changes after a cleanup of the temporary directory or after
+	a reboot.
+	Normally (i.e. if you do not use the temporary name feature
+	and DIR_CHANGE is not cleaned) all your changes will survive
+	a reboot even if you make use of the MAGIC_FILE feature below.
+
+	Note that some earlier versions of squash_dir failed to empty
+	DIR_CHANGE if it used the temporary file name feature, but now
+	it should be save to use it.
+
+	You can leave this variable empty: If you do this, squash_dir
+	will assume that you do not want to be able to write to
+	DIRECTORY, i.e. DIRECTORY will be mounted readonly.
+	In this case you will probably also want to leave the following
+	variable empty.
+
+RM_DIR_CHANGE
+	If this variable is true (not empty, not 0 and does not start
+	with f,F,n,N), the script will remove DIR_CHANGE at stopping.
+	If it contains p or P also empty parents are removed.
+	RM_DIR_CHANGE defaults to "parents" if the temporary name
+	feature is used for DIR_CHANGE.
+
+DIR_SQUASH
+	This is a directory which is needed for technical reasons
+	when DIR_CHANGE is non-empty (i.e. if you really want to mount
+	DIRECTORY writable). This directory will contain a read-only
+	version of the contents of FILE_SQFS.
+	In case things go wrong when making DIRECTORY writable (e.g.
+	if aufs/unionfs-fuse/unionfs/funionfs all fail due to missing
+	upport by zhe kernel) you can still access DIR_SQUASH; you can
+	also use this directory to compare the content of currently changed
+	files with their "original" stored in the most current
+	version of FILE_SQFS.
+
+	With some earlier versions of squash_dir the temporary
+	name feature was not or not properly supported for this
+	variable, but now it is save to use it.
+
+	If you leave this variable empty and DIR_CHANGE is nonempty,
+	DIR_SQUASH defaults to /var/run/${SVCNAME}.readonly
+
+	If DIR_CHANGE is empty, DIR_SQUASH is not really needed and
+	should usually be left empty. Nevertheless, if you set
+	DIR_SQUASH anyway, the DIR_SQUASH directory will contain an
+	identical copy of DIRECTORY (this is useful if you use some
+	scripts which rely on DIR_SQUASH and you change DIR_CHANGE
+	temporarily from nonempty to empty).
+
+RM_DIR_SQUASH
+	If this variable is true, the script will remove DIR_SQUASH
+	at stopping (if DIR_SQUASH is set and the directory does not
+	contain files). If it contains the letter "p", also empty
+	parents are removed.
+	RM_DIR_SQUASH defaults to true if the default (and nonempty)
+	value is used for DIR_SQUASH.
+	It defaults to "parents" if the temporary name feature is used
+	for DIR_SQUASH.
+
+NAME_FILE
+	If you use the temporary name feature for DIR_CHANGE or
+	DIR_SQUASH, this variable must contain the name of a file
+	which is used to store these temporary names. If no errors
+	occur, this file is created/removed on start/stop.
+	If NAME_FILE is empty, it defaults to /var/run/${SVCNAME}
+
+TMP_SQFS
+	This is a filename (which supports the temporary name feature)
+	which is used during shutdown for the squashfs-file which
+	is created from DIRECTORY. After successfull creation that file
+	is moved to FILE_SQFS.
+	On the partition of this file there must be enough space to
+	store the new FILE_SQFS. If possible, you should use the
+	same partition on which also FILE_SQFS is stored (then the
+	move command does not have to copy the data once more).
+	Alternatively, if you have sufficient ram, you can also
+	use a ramdisk like /dev/shm/dir_squash_tmp_sqfs.XXXXXXXX
+	(but you will not get much speed increase from doing so).
+	If TMP_SQFS is empty, it defaults to
+	${TMPDIR}/${SVCNAME}.sqfs.XXXXXXXX
+
+FILE_SQFS
+	This is the file which contains the actual squashfs data of
+	DIRECTORY (this file must exist when you start this script.
+	See the output message of the script on how to create it.)
+	If you leave this empty, it defaults to ${DIRECTORY}.sqfs.
+
+FILE_SQFS_OLD
+	If defined, this file will be an (automatically updated)
+	copy of your previous FILE_SQFS file.
+
+MV_FILE_SQFS
+	Here you can define the mv-command which is used to create
+	FILE_SQFS_OLD. You might want to set this e.g. to
+	'mv --backup --' 'mv --version-control --', or similar things.
+	The default is 'mv --'
+
+FILE_TBZ
+	If defined, this file will contain a copy of FILE_SQFS,
+	but in .tar.bz2 format (updated during stopping).
+	This may be handy in case of problems when you do not have
+	access to a kernel with an sqfs-module or to unsquashfs.
+
+TARCMD
+	This is the command (including options) used to create the
+	FILE_TBZ archive. It defaults to "tar -cjf", but you might
+	want set it to "/home/bin/tbzd -R" if you installed my
+	compression scripts there (this will save slightly more space
+	by stripping the parent directory names and using bzip -9).
+	Of course, you can also use your own script analogously or
+	use another compression program.
+
+FILE_TBZ_OLD
+	If defined, this file will be an (automatically updated)
+	copy of your previous FILE_SQFS_TBZ file.
+
+MV_FILE_TBZ
+	Here you can define the mv-command which is used to create
+	FILE_TBZ_OLD. See MV_FILE_SQFS.
+
+IGNORETOP
+	This is a list of paths relative to the top-level ${DIRECTORY}
+	whose changes (which actually occur in ${DIR_CHANGE})
+	are ignored when squash_dir decides whether the directory
+	needs to be re-squashed. So, for example if you define
+	IGNORETOP='\"A \\\"magic\\\" link\" \"subdir/device-*\"'
+	then changes in the files/links/devices/whatever called
+		${DIR_CHANGE}/A "magic" file
+		${DIR_CHANGE}/subdir/device-<something may follow here>
+	will get ignored. Do not use this for directories if you also want to
+	ignore the content of the directories - use IGNOREDIR for the latter.
+	The format of the list is space-separated but quoting is allowed.
+	More precisely, the list is first eval'ed, and then each item is
+	eval'ed within "..." context (and interpreted as a filenane pattern),
+	therefore the included " needs to be triple-quoted and the space and *
+	needs not be quoted if used within \" ... \".
+
+IGNORETOPFILE
+	This is like IGNORETOP, but it is explicitly checked that the match
+	is a file (a link to a file does not count either); those of other
+	type are ignored.
+
+IGNORETOPDIR
+	This is like IGNORETOPFILE, but it is explicitly checked that the
+	match is a directory. In this case, also the content of the directory
+	is ignored.
+
+IGNORE
+	This is like IGNORETOP with the difference that the content is not
+	a list of names but an expression which is passed to find in an
+	eval "..." context.
+	Here you can check also for other files which are not in the
+	top-level directory. If you use -path, note that the pathname starts
+	with ${DIR_CHANGE}, so e.g. to ignore the link .bad_link in the
+	top-level of ${DIRECTORY}, but only if this is really a link)
+	you can define
+	IGNORE='-path "\${DIR_CHANGE}"/.bad_link -type l'
+	If your match is a directory and you call -prune, then also the
+	content of the directory is ignore.
+
+IGNOREFILE
+	This is similar to IGNORE, but it is additionally (automatically)
+	added code for find to check that the match is a file.
+
+IGNOREDIR
+	This is similar to IGNORE, but it is additionally (automatically)
+	added code for find to check that the match is a directory.
+	Moreover, in this case also -prune is called to ignore the
+	content of this directory.
+
+IGNORETOUCH
+	This is a list of paths relative to the top-level ${DIRECTORY}
+	whose changes (which actually occur in ${DIR_CHANGE}) are ignored,
+	provided that the diff utility shows that the file was not modified
+	compared to the corresponding original file in ${DIR_SQUASH}.
+	The format of the list is that of a case statement, i.e. you can
+	use file globbing and | to separate alternatives and have to
+	quote | or ) if you use it as symbols. Note that no pruning of
+	directories is done, i.e. with each directory also its whole content
+	is checked; directories are by definition always equal.
+	Typical example: IGNORETOUCH='ls-R'
+	Even if the file ${DIRECTORY}/ls-R was recreated by one of your
+	system tools, no re-squashing will be done if the new file is
+	identical to the old one and if there were no other changes.
+
+KEEP
+	If DIR_CHANGE is cleaned without re-squashing (this can only
+	happen if no other files than those in IGNORE or IGNORETOUCH
+	were changed), then the files in this variable are kept anyway.
+	Currently, only files/subdirs of ${DIRECTORY} are supported,
+	no deeper nesting is allowed (i.e. you must not use "/" here).
+	The format is that of "case", i.e. you can use wildcards and
+	separate several names with '|'. Quoting is of course supported.
+	You must not use ")" in the name unless you quote it.
+	Example: IGNORE=".*|'*)'" will keep all files/subdirs of the form
+	${DIRECTORY}/.* or "${DIRECTORY}/*)"
+
+ORDER
+	If DIR_CHANGE is empty, this variable is ignored.
+	Otherwise, its value should be a string consisting of
+	all (or some) of the words
+		aufs unionfs-fuse unionfs funionfs   (*)
+	Then the corresponding tool is used to make DIRECTORY writable.
+	The tools are attempted in the given order: If the first tool
+	fails, a warning message is printed, and the next tool is
+	attempted and so on. If ORDER is empty, it defaults to (*).
+
+MAGIC_FILE
+	Normally, if DIR_CHANGE is nonempty on shutdown,
+	the squash-file and the tbz-file are created (and the
+	backups are made), and afterwards DIR_CHANGE is deleted.
+	However, if the file $MAGIC_FILE exists during shutdown,
+	nothing of these things happens, i.e. the information in
+	DIR_CHANGE is simply kept for the next start of this script
+	(or for your manual interaction).
+	In particular, creating MAGIC_FILE temporarily, you can
+	"delay" the update during shutdown until you delete MAGIC_FILE
+	again. This is useful e.g. for /usr/src/linux which you usually
+	will not want to recompress after recompilation of the kernel.
+	If you leave MAGIC_FILE empty, it defaults to
+	$DIR_CHANGE/.no-save
+
+THRESHOLD
+	If this variable is a positive number, and DIR_CHANGE is not
+	larger than THRESHOLD kilobytes, then the effect is as if
+	MAGIC_FILE exists, i.e. the update during shutdown will not
+	happen. You can override this with:
+
+IGNORE_THRESHOLD
+	If this file exists, then THRESHOLD is ignored durig
+	shutdown. If this file resides in $DIR_CHANGE, then it is
+	removed before the compression. Of you leave IGNORE_THRESHOLD
+	empty, it defaults to $DIR_CHANGE/.do-save
+
+MKSQUASHFS
+	These options are used for mksquashfs (e.g. -check_data).
+	The option -noappend is used automatically.
+
+VERBOSE_MODE
+	If this variable is
+	0
+		then -no-progress is appended to mksquashfs options and
+		the output of mksquashfs is redirected to /dev/null.
+	1 or empty
+		then stdout of mksquashfs is redirected to /dev/null
+		Usually, this is the same as "0", only marginally slower.
+		However, you might apply the patch of this package for
+		mksquashfs to redirect the progress bar to stderr.
+		This produces the nicest output with no redundant information.
+	2
+		then mksquashfs is called without additional options or
+		redirections.
+
+MOUNT_AUFS
+	These are additional mount options used for aufs.
+	This defaults to "-i" because /sbin/mount.aufs uses
+	predictable temporary names and thus is a security risk.
+	Omit this -i only when you patched /sbin/mount.aufs to
+	behave securely.
+
+MOUNT_UNIONFS_FUSE
+	These are additional mount options used for unionfs-fuse.
+	The default is -o cow -o allow_other -o use_ino -o nonempty
+	So if you modify this variable, you should probably include
+	these options. Omit them only if you know what you are doing.
+
+MOUNT_UNIONFS
+	These are additional mount options used for unionfs.
+	The default is empty.
+
+MOUNT_FUNIONFS
+	These are additional mount options used for funionfs.
+	The default is -o allow_other -o nonempty.
+	So if you modify this variable, you should probably include
+	these options. Omit them only if you know what you are doing.
+
+UMOUNT_OPTS
+	These are options which are used for umounting.
+	This defaults to "-i" because /sbin/umount.aufs might call
+	/sbin/auplink which uses predictable temporary names and thus
+	is a security risk.
+	Omit this -i only when you patched /sbin/umount.aufs or
+	/sbin/auplink to behave securely.
+
+LAZY_UMOUNT
+	If this variable is nonempty, then a lazy umount is attempted
+	after a failed umount. This means that the chances are good
+	that this script will successfully stop even if the directory
+	is still in use. However, it might happen that e.g.
+	loop devices are not freed correctly.
+	Only set this variable if you know what you are doing.
+
+LOCKFILE
+	Since mount/umount calls cannot properly be done in parallel
+	(since apparently they do not properly lock /etc/mtab), we use
+	flock for these calls to create a lockfile (which is never
+	erased) to allow rc_parallel="YES". This variable contains
+	the path of this lock file; if unset, /etc/mtab.lock is used.
+	It is dangerous to use a user-writable directory here
+	(like e.g. /tmp). No locking is done if this variable is
+	nonempty and does not start with "/".

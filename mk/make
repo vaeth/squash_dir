@@ -1,0 +1,76 @@
+#! /usr/bin/env sh
+
+export LC_ALL
+LC_ALL=C
+
+Usage () {
+	printf '%s\n' "Usage: ${0##*/} [options] args-for-make
+Available options are
+  -q  quiet
+  -n  Stop after ./configure, i.e. do not run make
+  -jX Use -jX (currently ${jarg})
+  -p  configure with --enable-squashfs-tools-patch
+  -P  configure with --disable-squashfs-tools-patch
+  -d X configure with --with-decompress=X
+  -r  Change also directory permissions to root (for fakeroot-ng)"
+	exit ${1:-1}
+}
+
+Info () {
+	printf '%s\n' "${*}"
+}
+
+Die () {
+	printf '%s: %s\n' "${0##*/}" "${1}"
+	exit ${2:-1}
+}
+
+quiet=false
+earlystop=false
+use_chown=false
+jarg='-j3'
+enablepatch=false
+configure_extra='--prefix=/usr'
+OPTIND=1
+while getopts 'qnrpPd:j:?hH' opt
+do	case "${opt}" in
+	q) quiet=:;;
+	n) earlystop=:;;
+	r) use_chown=:;;
+	p) configure_extra="${configure_extra} --enable-squashfs-tools-patch";;
+	P) configure_extra="${configure_extra} --disable-squashfs-tools-patch";;
+	d) configure_extra="${configure_extra} --with-decompress=\"\${decompress}\""
+		decompress="${optarg}";;
+	j) [ -n "${OPTARG}" ] && jarg='-j${OPTARG}' || jarg='';;
+	*) Usage 0;;
+	esac
+done
+if [ ${OPTIND} -gt 1 ]
+then	( eval '[ "$(( 0 + 1 ))" = 1 ]' ) >/dev/null 2>&1 && \
+	eval 'shift "$(( ${OPTIND} - 1 ))"' || shift "`expr ${OPTIND} - 1`"
+fi
+
+${quiet} && quietredirect='>/dev/null 2>&1' || quietredirect=''
+
+if ${use_chown}
+then	ls /root >/dev/null 2>&1 && \
+		Die "You should not really be root when you use -r" 2
+	chown -R root:root .
+fi
+
+if ! test -e Makefile
+then	if ! test -e configure || ! test -e Makefile.in
+	then	Info "Running autotools..."
+		eval ./autogen.sh ${quietredirect} || Die "autogen failed"
+	fi
+	Info "Running configure" ${configure_extra}
+	eval ./configure ${configure_extra} ${quietredirect} || \
+		Die "configure failed"
+fi
+${earlystop} && exit
+Info "Making ${*}..."
+command -v make >/dev/null 2>&1 || Die "cannot find make"
+if ${quiet}
+then	exec make ${jarg} "${@}" >/dev/null 2>&1
+else	exec make ${jarg} "${@}"
+fi

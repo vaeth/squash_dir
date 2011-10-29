@@ -1,0 +1,44 @@
+# ChangeLog for squash_dir
+
+*squash_dir-10.2
+	Martin Väth <martin at mvath.de>:
+	- Hardcode PORTAGE_COMPRESS into squashfs-tools patching function.
+	  Otherwise problems would arise if PORTAGE_COMPRESS is changed
+	  after installation
+	- Improve informal/error messages in squashfs-tools patching function.
+	- Place squash-dir into /usr/sbin
+	- Minor fixes in auxiliary scripts and docs
+
+*squash_dir-10.1
+	Martin Väth <martin at mvath.de>:
+	- Consistent usage of UTF8
+
+*squash_dir-10.0
+	Martin Väth <martin at mvath.de>:
+	- IMPORTANT CHANGE: When called for the first time (with a new config)
+	  squash_dir will now create $FILE_SQFS automatically and, moreover,
+	  will then *clean* (i.e. *remove*, *unlink*, *destroy*) $DIRECTORY.
+	  Of course, several sanity checks are made before doing so, and
+	  usually, you can revert this by using unsquashfs $FILE_SQFS
+	  (unless you used a vital directory) but some information such as
+	  hard links might have got lost permanently in this process, so:
+	  TAKE CARE!!
+	- First version with autotools
+	- Treat IGNORE* variables differently (and introduce some new),
+	  basing the test on the find utility. It is required that the
+	  find utility knows the -path option which is not (yet) POSIX.
+	  Note that the KEEP variable has not changed since that works
+	  by a different mechanism
+	- Minor modifications in mounting unionfs-fuse and funionfs
+	  (customizable default options, no test after mounting)
+
+*squash_dir-9.0
+	Martin Väth <martin at mvath.de>:
+	- Support for unionfs-fuse and put it on second place in ORDER.
+	- print_dir_change and print_dir_squash now append a "/"
+
+*squash_dir-1.0
+	Martin Väth <martin at mvath.de>:
+	- Initial implementation based on synss' script, see
+	  http://forums.gentoo.org/viewtopic-t-465367-highlight-.html
+

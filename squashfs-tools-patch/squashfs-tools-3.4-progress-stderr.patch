@@ -1,0 +1,37 @@
+--- squashfs-tools/mksquashfs.c
++++ squashfs-tools/mksquashfs.c
+@@ -2254,26 +2254,26 @@
+ 	int spaces = columns - used - hashes;
+ 
+ 	if(current > max) {
+-		printf("%lld %lld\n", current, max);
++		fprintf(stderr, "%lld %lld\n", current, max);
+ 		return;
+ 	}
+ 
+ 	if(columns - used < 0)
+ 		return;
+ 
+-	printf("\r[");
++	fprintf(stderr,	"\r[");
+ 
+ 	while (hashes --)
+-		putchar('=');
++		putc('=', stderr);
+ 
+-	putchar(rotate_list[rotate]);
++	putc(rotate_list[rotate], stderr);
+ 
+ 	while(spaces --)
+-		putchar(' ');
++		putc(' ', stderr);
+ 
+-	printf("] %*lld/%*lld", max_digits, current, max_digits, max);
+-	printf(" %3lld%%", current * 100 / max);
+-	fflush(stdout);
++	fprintf(stderr, "] %*lld/%*lld", max_digits, current, max_digits, max);
++	fprintf(stderr, " %3lld%%", current * 100 / max);
++	fflush(stderr);
+ }
+ 
+ 
