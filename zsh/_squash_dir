@@ -6,12 +6,14 @@ _arguments -s -S -A '-*' : \
 '-f[force restart; if combined with -s or -n create files anyway]' \
 '-E[do not stop at first error]' \
 '-t[do not support titlebar display]' \
-'-e[cancel previous -e]' \
+'-a[alphabetic order]' \
+'-e[cancel previous -E]' \
 '-T[cancel previous -t]' \
 '-S[cancel previous -s]' \
 '-N[cancel previous -n]' \
 '-F[cancel previous -f]' \
 '-K[cancel previous -k]' \
+'-A[cancel previous -a]' \
 '(1 * -)'{'-h','-H','-\\?'}'[help]' \
 '1:action:(status show list info print restart stop start zap)' \
 '*:names:compadd -- /etc/init.d/squash_*(@:t:s/squash_/)'

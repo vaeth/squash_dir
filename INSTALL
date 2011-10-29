@@ -4,7 +4,7 @@ There are essentially three possibilities to install the package:
 ========================================
 
 If you are a Gentoo user (which you probably are if your are using openrc
-or the old gentoo initscripts - some of these are required for this project)
+which is required for this project)
 you can just copy the tarball to your $DISTDIR
 (by default /usr/portage/distfiles, but probably you will want to change
 this anyway if you will use this package)

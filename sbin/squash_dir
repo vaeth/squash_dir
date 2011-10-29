@@ -1,32 +1,6 @@
 #! /usr/bin/env sh
 # (C) Martin Väth <martin@mvath.de>
 
-force=false
-error_skip=:
-save_force=false
-keep_force=false
-kill_force=false
-notitle=false
-OPTIND=1
-while getopts 'sSnNfFkKeEtT?hH' opt
-do	case "${opt}" in
-	s) save_force=:;;
-	S) save_force=false;;
-	n) keep_force=:;;
-	N) keep_force=false;;
-	f) force=:;;
-	F) force=false;;
-	k) kill_force=:;;
-	K) kill_force=false;;
-	e) error_skip=:;;
-	E) error_skip=false;;
-	t) notitle=:;;
-	T) notitle=false;;
-	*) Usage 0;;
-	esac
-done
-shift $(( ${OPTIND} - 1 ))
-
 have_set_title=false
 Title() {
 	${notitle} || printf '\033]0;%s: %s\007' "${0##*/}" "${*}"
@@ -54,6 +28,7 @@ Die() {
 	Error "${*}"
 	Exit 1
 }
+
 
 Usage() {
 	Echo "Usage: ${0##*/} [option] status|restart|stop|start|zap [masks]
@@ -87,8 +62,37 @@ e.g. \"sh\" or \"sho\" instead of \"show\" or \"z\" instead of \"zap\"."
 	Exit ${1:-1}
 }
 
+force=false
+error_skip=:
+save_force=false
+keep_force=false
+kill_force=false
+notitle=false
+alpha_order=false
+OPTIND=1
+while getopts 'sSnNfFkKeEtTaA?hH' opt
+do	case "${opt}" in
+	s) save_force=:;;
+	S) save_force=false;;
+	n) keep_force=:;;
+	N) keep_force=false;;
+	f) force=:;;
+	F) force=false;;
+	k) kill_force=:;;
+	K) kill_force=false;;
+	e) error_skip=:;;
+	E) error_skip=false;;
+	t) notitle=:;;
+	T) notitle=false;;
+	a) alpha_order=:;;
+	A) alpha_order=false;;
+	*) Usage 0;;
+	esac
+done
+shift $(( ${OPTIND} - 1 ))
+
 PrintInit() {
-	printf '%-40s ' "${*}"
+	printf "%-${max_len:-40}s " "${*}"
 }
 
 PrintComment() {
@@ -106,18 +110,18 @@ PrintNoSave() {
 	PrintAction 'stop'
 	${1} || need_result=`"${2}" -q need_squash 2>&1`
 	case "${need_result}" in
-	0) PrintComment 'is unmodified';;
-	1) nosave=:; PrintComment 'will not re-squash changes';;
-	*) PrintComment "error: ${a}";;
+	0)	PrintComment 'is unmodified';;
+	1)	nosave=:; PrintComment 'will not re-squash changes';;
+	*)	PrintComment "error: ${a}";;
 	esac
 }
 
 StatusRestart() {
 	statusres=`"${1}" -q have_kill 2>&1`
 	case "${statusres}" in
-	0) PrintAction 'restart' 'changes will be re-squashed';;
-	1) PrintAction 'restart' 'changes will be deleted';;
-	*) Error "error: ${statusres}"; return 1;
+	0)	PrintAction 'restart' 'changes will be re-squashed';;
+	1)	PrintAction 'restart' 'changes will be deleted';;
+	*)	Error "error: ${statusres}"; return 1;;
 	esac
 	return 0
 }
@@ -130,9 +134,9 @@ Status() {
 	fi
 	statusres=`"${1}" -q will_squash 2>&1`
 	case "${statusres}" in
-	0) PrintNoSave false "${1}";;
-	1) StatusRestart "${1}" || return 1;;
-	*) Error "error: ${statusres}"; return 1;;
+	0)	PrintNoSave false "${1}";;
+	1)	StatusRestart "${1}" || return 1;;
+	*)	Error "error: ${statusres}"; return 1;;
 	esac
 	return 0
 }
@@ -225,9 +229,12 @@ CheckStop() {
 	checked_need=:
 	need_result=`"${1}" -q need_squash 2>&1`
 	case "${need_result}" in
-	0) will_restart=false; return 0;;
-	1) CreateDosave "${1}"; return;;
-	*) Error "${1} error: ${checkstopres}"; return 1;;
+	0)	will_restart=false
+		return 0;;
+	1)	CreateDosave "${1}"
+		return;;
+	*)	Error "${1} error: ${checkstopres}"
+		return 1;;
 	esac
 }
 
@@ -276,12 +283,28 @@ Start() {
 
 Matchingji() {
 	case "${j#*_}" in
-	${i})	test -L "${j}" && test -x "${j}" && {
-			ifound=:
-			return
-		};;
+	${i})	test -L "${j}" && test -x "${j}" && return;;
 	esac
 	return 1
+}
+
+PushArray() {
+	eval "pa__=\${${1}__:-0}"
+	eval "${1}__${pa__}=\"\${2}\"
+	${1}__="'$(( ${pa__} + 1 ))'
+}
+
+InArray() {
+	eval "pa__=\${${1}__:-0}
+	"'while [ ${pa__} -gt 0 ]
+	do	pa__=$(( ${pa__} - 1 ))
+		eval "[ \"\${${1}__${pa__}}\" = \"\${2}\" ]" && return
+	done'
+	return 1
+}
+
+GetArray() {
+	eval "${1}=\"\${${2}__${3}}\""
 }
 
 Doall() {
@@ -295,19 +318,31 @@ Doall() {
 	f=${1}
 	shift
 	# first check all args:
+	max_len=0
+	inits__=0
 	for i
 	do	ifound=false
 		for j in /etc/init.d/squash_*
-		do	Matchingji && break
+		do	Matchingji || continue
+			ifound=:
+			InArray inits "${j}" && continue
+			PushArray inits "${j}"
+			${alpha_order} && PushArray order "${j}"
+			curr_len=${#j}
+			[ ${max_len} -lt ${curr_len} ] && max_len=${curr_len}
 		done
 		${ifound} || Die "no executable symlink /etc/init.d/squash_${i}"
 	done
-	for j in /etc/init.d/squash_*
-	do	ifound=false
-		for i
-		do	Matchingji && break
+	if ${alpha_order}
+	then	inits__=0
+		for i in /etc/init.d/squash_*
+		do	InArray order "${i}" && PushArray inits "${i}"
 		done
-		${ifound} || continue
+	fi
+	i=0
+	while [ ${i} -lt ${inits__} ]
+	do	GetArray j inits ${i}
+		i=$(( ${i} + 1 ))
 		if ${error_skip} && [ ${stat} -ne 0 ]
 		then	Echo "Skipping ${j} due to previous error"
 			continue
@@ -330,15 +365,10 @@ opt="${1}"
 case "${opt}" in
 stat*|sh*|l*|p*|i*)
 	Doall Status "${@}";;
-re*)
-	Doall -restart Stop "${@}";;
-sto*)
-	Doall -stop Stop "${@}";;
-z*)
-	Doall -zap Stop "${@}";;
-star*)
-	Doall Start "${@}";;
-*)
-	Usage;;
+re*)	Doall -restart Stop "${@}";;
+sto*)	Doall -stop Stop "${@}";;
+z*)	Doall -zap Stop "${@}";;
+star*)	Doall Start "${@}";;
+*)	Usage;;
 esac
 Exit

@@ -1,5 +1,10 @@
 # ChangeLog for squash_dir
 
+*squash_dir-11.1
+	Martin Väth <martin at mvath.de>:
+	- squash_dir script: Follow order of command line without new option -a
+	- squash_dir script: Improve alignment of output
+
 *squash_dir-11.0
 	Martin Väth <martin at mvath.de>:
 	- Provide COMPRESSION and default to xz.
