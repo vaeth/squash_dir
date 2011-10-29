@@ -75,7 +75,7 @@ Mktemp() {
 	Mkdir "${mktempn%/*}" || mktempstat=${?}
 	if [ ${mktempstat} -eq 0 ]
 	then	mktempn=`mktemp ${2} -- "${mktempn}"` || \
-			Error ${?} mktemp ${2} "${mktempn} failed"
+			Error ${?} "mktemp ${2} ${mktempn} failed"
 		mktempstat=${?}
 		[ -n "${2}" ] && chmod 755 -- "${mktempn}"
 		eval "${1}"'="${mktempn}"'
@@ -175,8 +175,7 @@ Readtemps() {
 	[ -n "${NAME_FILE}" ] \
 		&& readtempsc=`cat -- "${NAME_FILE} 2>/dev/null"` \
 		&& [ -n "${readtempsc}" ] || {
-			Error ${?} "cannot read ${NAME_FILE}"
-			eend ${?}
+			eend ${?} "cannot read ${NAME_FILE}"
 			return
 		}
 	readtempsc="
@@ -191,8 +190,7 @@ readtempsk=\${readtempsc##*\"
 "*}
 		case "${readtempsk}" in
 		''|*/*)
-			Error 1 "broken ${readtempsi}_name in ${NAME_FILE}"
-			eend ${?}
+			eend 1 "broken ${readtempsi}_name in ${NAME_FILE}"
 			return;;
 		esac
 		eval "${readtempsi}=\"\${readtempsj%/*}/\${readtempsk}\""
@@ -252,8 +250,7 @@ Check() {
 	do	case "${checki}" in
 		''|/*)	continue;;
 		esac
-		eerror "${checki} is not an absolute path"
-		eend 2
+		eend 2 "${checki} is not an absolute path"
 		return
 	done
 	Normalize TMPDIR || TMPDIR='/tmp'

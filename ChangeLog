@@ -1,5 +1,9 @@
 # ChangeLog for squash_dir
 
+*squash_dir-11.2
+	Martin Väth <martin at mvath.de>:
+	- Improve error output in some cases
+
 *squash_dir-11.1
 	Martin Väth <martin at mvath.de>:
 	- squash_dir script: Follow order of command line without new option -a
