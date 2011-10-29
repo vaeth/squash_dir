@@ -1,5 +1,112 @@
 # ChangeLog for squash_dir
 
+*squash_dir-11.0
+	Martin Väth <martin at mvath.de>:
+	- Provide COMPRESSION and default to xz.
+	- Use extra_commands instead of opts.
+	- Provide description (also of extra_commands) in the init-file.
+
+*squash_dir-10.21
+	Martin Väth <martin at mvath.de>:
+	- Add support for titlebar display
+
+*squash_dir-10.20
+	Martin Väth <martin at mvath.de>:
+	- Minor improvements in zsh completion
+
+*squash_dir-10.19
+	Martin Väth <martin at mvath.de>:
+	- Minor fixes in zsh completion and configure.ac
+
+*squash_dir-10.18
+	Martin Väth <martin at mvath.de>:
+	- Output clearing/killing only if really something gets removed
+	- Allow masks instead of names in the squash_dir wrapper script
+	- Improve zsh-completion and make squash_dir shortcuts more consistent
+
+*squash_dir-10.17
+	Martin Väth <martin at mvath.de>:
+	- Improve zsh-completion
+
+*squash_dir-10.16
+	Martin Väth <martin at mvath.de>:
+	- Provide zsh-completion
+
+*squash_dir-10.15
+	Martin Väth <martin at mvath.de>:
+	- No longer default to -i for MOUNT_AUFS (aufs2-util appears now safe).
+
+*squash_dir-10.14
+	Martin Väth <martin at mvath.de>:
+	- Introduce KILL_FILE.
+	- Introduce option -k to the squash_dir wrapper script
+	- Introduce MOUNT_AUFS_OPTS.
+
+*squash_dir-10.13
+	Martin Väth <martin at mvath.de>:
+	- Introduce -n to the squash_dir wrapper script
+
+*squash_dir-10.12
+	Martin Väth <martin at mvath.de>:
+	- Improve output of helper script again
+
+*squash_dir-10.11
+	Martin Väth <martin at mvath.de>:
+	- Rename squash-dir -> squash_dir and improve its output slightly
+	- Minor compatibility fixes
+
+*squash_dir-10.10
+	Martin Väth <martin at mvath.de>:
+	- Make cd -P tacit to avoid strange errors and side effects
+
+*squash_dir-10.9
+	Martin Väth <martin at mvath.de>:
+	- Provide fallback to cd -P if readlink does not exist
+
+*squash_dir-10.8
+	Martin Väth <martin at mvath.de>:
+	- Use -o hide_meta_files instead of -o hide_meta_dir with unionfs-fuse:
+	  http://podgorny.cz/~bernd/hg/hgwebdir.cgi/0.25/rev/081dfa9621fe
+
+*squash_dir-10.7
+	Martin Väth <martin at mvath.de>:
+	- Normalize DIR_SQUASH and DIR_CHANGE to get correct information
+	  with mountinfo (fixes regression introduced in squash_dir-10.6).
+	- Fix typo in automagic setting of UNIONFS_FUSE_HIDE.
+
+*squash_dir-10.6
+	Martin Väth <martin at mvath.de>:
+	- Use mountinfo if available to umount only if directory is really
+	  mounted. So "squash_dir stop" may succeed at a second call if the
+	  first call umounted only the union but could not umount the squashfs
+	  e.g. because the directory was busy.
+	- In case of failing umount of squashfs sleep and retry. This may fix
+	  problems if umount of unionfs returns while squashfs is still busy.
+
+*squash_dir-10.5
+	Martin Väth <martin at mvath.de>:
+	- Introduce UNIONFS_USE_HIDE="-o hide_meta_dir" if unionfs-fuse
+	  supports it.
+
+*squash_dir-10.4
+	Martin Väth <martin at mvath.de>:
+	- Fix dependency bug of automake:
+	  sysconf_DATA was not considered as data but as exe.
+
+*squash_dir-10.3
+	Martin Väth <martin at mvath.de>:
+	- Avoid race conditions in trap in squash-dir
+	- Remove usage of "local" keyword, thus being now practically POSIX
+	  except for find -path, mktemp, and possibly flock.
+	- Remove sys-fs/squashfs-tools patches (and the hacks to apply them)
+	  since they do not really belong into this project.
+	  You can find them (and ebuilds to apply them) in the mv overlay:
+	  http://git.overlays.gentoo.org/gitweb/?p=user/mv.git;a=tree
+	- Note that if you had earlier installed ebuild hacks, you have a file
+	  /etc/portage/env/sys-fs/squashfs-tools
+	  You should better remove this file and use instead the
+	  above mentioned ebuilds from the mv overlay.
+
 *squash_dir-10.2
 	Martin Väth <martin at mvath.de>:
 	- Hardcode PORTAGE_COMPRESS into squashfs-tools patching function.

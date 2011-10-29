@@ -1,10 +1,9 @@
 #! /usr/bin/env sh
 
-run ()
-{
-	echo ">>> ${*}" 1>&2
+run() {
+	printf '%s\n' ">>> ${*}" >&2
 	if ! "${@}"
-	then	echo Failed 1>&2
+	then	printf '%s\n' "failure" >&2
 		exit 1
 	fi
 }

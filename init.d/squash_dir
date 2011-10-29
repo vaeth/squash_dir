@@ -1,108 +1,113 @@
 #!/sbin/runscript
 # (C) Martin Väth <martin@mvath.de>
 
-depend () {
+depend() {
 	need localmount
 }
 
-opts="${opts} will_squash need_squash have_magic"
-opts="${opts} print_dir_change print_dir_squash"
+description='Mount a squashed directory in a writable manner'
 
-Which () {
-	command -v "${1}"
+extra_commands='will_squash need_squash have_magic have_kill'
+extra_started_commands="print_dir_change print_dir_squash"
+
+description_will_squash='print 1 to stderr if stop operation would re-squash'
+description_need_squash='print 1 to stderr if new data was written'
+description_have_magic='print 1 to stderr if $MAGIC_FILE exists'
+description_have_kill='print 1 to stderr if $KILL_FILE exists'
+description_print_dir_change='print effective $DIR_CHANGE to stderr'
+description_print_dir_squash='print effective $DIR_SQUASH to stderr'
+
+Which() {
+	command -v "${1}" 2>/dev/null
 }
 
-Warn () {
-	local errstat
+Warn() {
 	[ ${1} -eq 0 ] && return 0
-	errstat=${1}
+	warnstat=${1}
 	shift
-	ewarn "${*} [exit with ${errstat}]"
-	return ${errstat}
+	ewarn "${*} [exit with ${warnstat}]"
+	return ${warnstat}
 }
 
-Error () {
-	local errstat
+Error() {
 	[ ${1} -eq 0 ] && return 0
-	errstat=${1}
+	errorstat=${1}
 	shift
-	eerror "${*} [exit with ${errstat}]"
-	return ${errstat}
+	eerror "${*} [exit with ${errorstat}]"
+	return ${errorstat}
 }
 
-Mkdir () {
+Mkdir() {
 	[ -z "${1}" ] && return
 	test -d "${1}" && return
 	mkdir -p -- "${1}" || Error ${?} "cannot create ${1}"
 }
 
-Normalize () {
-	local truename i rstat prev
-	rstat=0
-	for i
-	do	eval "truename=\"\${${i}}\""
-		if [ -z "${truename}" ]
-		then	eval "${i}=\"\""
-			rstat=1
+Normalize() {
+	normalizestat=0
+	for normalizei
+	do	eval "normalizen=\"\${${normalizei}}\""
+		if [ -z "${normalizen}" ]
+		then	eval "${normalizei}=\"\""
+			normalizestat=1
 			continue
 		fi
 		if [ -n "${readlink}" ]
-		then	prev="${truename}"
-			truename=`"${readlink}" -f -- "${truename}"` \
-				|| truename=''
-			[ -n "${truename}" ] || truename="${prev}"
-		fi
-		while ! case "${truename}" in
+		then	normalizep=`"${readlink}" -f -- "${normalizen}"`
+		else	normalizep=`cd -P -- "${normalizen}" >/dev/null 2>&1 \
+				&& printf '%sA' "${PWD}"` \
+				&& normalizep="${normalizep%A}"
+		fi && [ -n "${normalizep}" ] && normalizen="${normalizep}"
+		while ! case "${normalizen}" in
 			*//*)	false;;
 			esac
-		do	truename="${truename%%//*}/${truename#*//}"
+		do	normalizen="${normalizen%%//*}/${normalizen#*//}"
 		done
-		[ "${truename}" != '/' ] && truename="${truename%/}"
-		eval "${i}"'="${truename}"'
+		[ "${normalizen}" != '/' ] && normalizen="${normalizen%/}"
+		eval "${normalizei}"'="${normalizen}"'
 	done
-	return ${rstat}
+	return ${normalizestat}
 }
 
-Mktemp () {
-	local d rstat
-	rstat=0
-	eval "d=\"\${${1}}\""
-	Mkdir "${d%/*}" || rstat=${?}
-	if [ ${rstat} -eq 0 ]
-	then	d=`mktemp ${2} -- "${d}"` || \
-			Error ${?} mktemp ${2} "${d} failed"
-		rstat=${?}
-		[ -n "${2}" ] && chmod 755 -- "${d}"
-		eval "${1}"'="${d}"'
+Mktemp() {
+	mktempstat=0
+	eval "mktempn=\"\${${1}}\""
+	Mkdir "${mktempn%/*}" || mktempstat=${?}
+	if [ ${mktempstat} -eq 0 ]
+	then	mktempn=`mktemp ${2} -- "${mktempn}"` || \
+			Error ${?} mktemp ${2} "${mktempn} failed"
+		mktempstat=${?}
+		[ -n "${2}" ] && chmod 755 -- "${mktempn}"
+		eval "${1}"'="${mktempn}"'
 	fi
-	Normalize ${1} && return ${rstat}
+	Normalize ${1} && return ${mktempstat}
 }
 
-Mktempdir () {
-	local tstat wstat v
+Mktempdir() {
 	if ! ${1}
-	then	eval "Mkdir \"\${$2}\""
+	then	Normalize ${2}
+		eval "Mkdir \"\${$2}\""
 		return
 	fi
 	Mktemp ${2} -d
-	tstat=${?}
-	eval "v=\"\${${2}}\""
-	v="${v%/}"
-	case "${v}" in
+	mktempdirtstat=${?}
+	eval "mktempdirv=\"\${${2}}\""
+	mktempdirv="${mktempdirv%/}"
+	case "${mktempdirv}" in
 	/*)	:;;
-	*)	return ${tstat};;
+	*)	return ${mktempdirtstat};;
 	esac
 	if ${have_name_file}
-	then	printf "%s='%s'\n" ${3} "${v##*/}" >>"${NAME_FILE}"
+	then	printf "%s='%s'\n" ${3} "${mktempdirv##*/}" >>"${NAME_FILE}"
 	else	have_name_file=:
-		printf "%s='%s'\n" ${3} "${v##*/}" >"${NAME_FILE}"
+		printf "%s='%s'\n" ${3} "${mktempdirv##*/}" >"${NAME_FILE}"
 	fi
-	wstat=${?}
-	if [ ${wstat} -ne 0 ]
-	then	Error ${wstat} "cannot write to ${NAME_FILE}"
-		[ ${tstat} -eq 0 ] && return ${wstat}
+	mktempdirwstat=${?}
+	if [ ${mktempdirwstat} -ne 0 ]
+	then	Error ${mktempdirwstat} "cannot write to ${NAME_FILE}"
+		[ ${mktempdirtstat} -eq 0 ] && return ${mktempdirwstat}
 	fi
-	return ${tstat}
+	return ${mktempdirtstat}
 }
 
 Lock() {
@@ -113,49 +118,51 @@ Lock() {
 	flock -w 20 -- "${LOCKFILE}" "${@}"
 }
 
-Umount () {
+Umount() {
 	Lock umount "${UMOUNT_OPTS}" "${@}" >/dev/null && return
-	local rstat
-	rstat=${?}
+	umountstat=${?}
 	if [ -n "${LAZY_UMOUNT}" ]
 	then	Lock umount -l "${UMOUNT_OPTS}" "${@}" >/dev/null && return
-		rstat=${?}
+		umountstat=${?}
 	fi
-	Error ${rstat} "umount ${*} failed"
+	Error ${umountstat} "umount ${*} failed"
 }
 
-Mount () {
+Mount() {
 	Lock mount "${@}"
 }
 
-Cleardir () {
-	local d i e
-	d="${1}"
-	test -d "${d}" || return
-	e="${2}"
-	[ -n "${e}" ] && e="|${e}"
-	eval "for i in \"\${d}\"/* \"\${d}\"/.*
-	do	case \"\${i##*/}\" in
-		''|.|..${e})	continue;;
-		'*'|'.*')	test -e \"\${i}\" || continue;;
+# Usage: Cleardir directory [keep] [action-before-first-removal]
+Cleardir() {
+	cleardird="${1}"
+	test -d "${cleardird}" || return
+	cleardire="${2:+|}${2}"
+	cleardirt="${3:-:}"
+	eval "for cleardiri in \"\${cleardird}\"/* \"\${cleardird}\"/.*
+	do	case \"\${cleardiri##*/}\" in
+		''|.|..${cleardire})	continue;;
+		'*'|'.*')	test -e \"\${cleardiri}\" || continue;;
 		esac
-		rm -rf -- \"\${i}\" || return
+		eval \"\${cleardirt}\"
+		cleardirt=:
+		rm -rf -- \"\${cleardiri}\" || return
 	done"
 	return 0
 }
 
-Compare () {
-	local ori
-	ori="${DIR_SQUASH}/${1##*/}"
+Compare() {
+	compareori="${DIR_SQUASH}/${1##*/}"
 	if test -f "${1}"
-	then	test -f "${ori}" && diff -q -- "${1}" "${ori}" >/dev/null 2>&1
+	then	test -f "${compareori}" && \
+			diff -q -- "${1}" "${compareori}" >/dev/null 2>&1
 		return
 	fi
 	test -d "${1}" || return 0
-	test -d "${ori}" && diff -r -q -- "${1}" "${ori}" >/dev/null 2>&1
+	test -d "${compareori}" && \
+		diff -r -q -- "${1}" "${compareori}" >/dev/null 2>&1
 }
 
-Checktemp () {
+Checktemp() {
 	eval "case \"\${${1}}\" in
 	*XXXXXX)
 		${1}_temp=:
@@ -164,35 +171,35 @@ Checktemp () {
 	esac"
 }
 
-Readtemps () {
-	local i j k c
+Readtemps() {
 	[ -n "${NAME_FILE}" ] \
-		&& c=`cat -- "${NAME_FILE} 2>/dev/null"` \
-		&& [ -n "${c}" ] || {
+		&& readtempsc=`cat -- "${NAME_FILE} 2>/dev/null"` \
+		&& [ -n "${readtempsc}" ] || {
 			Error ${?} "cannot read ${NAME_FILE}"
 			eend ${?}
 			return
 		}
-	c="
-${c}
+	readtempsc="
+${readtempsc}
 "
-	for i in DIR_SQUASH DIR_CHANGE
-	do	eval "j=\"\${${i}}\"; k=\${c##*\"
-\${i}_name='\"}; \${${i}_temp}" || continue
-		k=${k%%"'
+	for readtempsi in DIR_SQUASH DIR_CHANGE
+	do	eval "readtempsj=\"\${${readtempsi}}\"
+readtempsk=\${readtempsc##*\"
+\${readtempsi}_name='\"}
+\${${readtempsi}_temp}" || continue
+		readtempsk=${readtempsk%%"'
 "*}
-		case "${k}" in
+		case "${readtempsk}" in
 		''|*/*)
-			Error 1 "broken ${i}_name in ${NAME_FILE}"
+			Error 1 "broken ${readtempsi}_name in ${NAME_FILE}"
 			eend ${?}
 			return;;
 		esac
-		eval "${i}=\"\${j%/*}/\${k}\""
+		eval "${readtempsi}=\"\${readtempsj%/*}/\${readtempsk}\""
 	done
 }
 
-CreateFirstTime () {
-	local exitstatus
+CreateFirstTime() {
 	einfo "It seems you start ${SVCNAME} for the first time with this configuration:"
 	einfo "The squashed file ${FILE_SQFS} does not exist yet."
 	einfo "So I will try to initialize..."
@@ -236,17 +243,16 @@ CreateFirstTime () {
 	einfo "Name of the squashfs file: ${FILE_SQFS}"
 }
 
-Check () {
-	local i
+Check() {
 	readlink="`Which readlink`" || readlink=''
 	[ -n "${DIRECTORY}" ] && : ${FILE_SQFS:="${DIRECTORY}.sqfs"}
-	for i in "${DIRECTORY}" "${DIR_CHANGE}" "${DIR_SQUASH}" \
+	for checki in "${DIRECTORY}" "${DIR_CHANGE}" "${DIR_SQUASH}" \
 		"${TMPDIR}" "${FILE_SQFS}" "${FILE_SQFS_OLD}" \
 		"${FILE_TBZ}" "${FILE_TBZ_OLD}" "${NAME_FILE}"
-	do	case "${i}" in
+	do	case "${checki}" in
 		''|/*)	continue;;
 		esac
-		eerror "${i} is not an absolute path"
+		eerror "${checki} is not an absolute path"
 		eend 2
 		return
 	done
@@ -263,11 +269,14 @@ Check () {
 		have_name_file=false
 	else	use_name_file=false
 	fi
-	if ${use_name_file} && [ "${1}" != start ]
-	then	Readtemps || {
-			eend ${?}
-			return
-		}
+	if [ "${1}" != start ]
+	then	if ${use_name_file}
+		then	Readtemps || {
+				eend ${?}
+				return
+			}
+		else	Normalize DIR_SQUASH DIR_CHANGE
+		fi
 	fi
 	if ! Normalize DIRECTORY FILE_SQFS
 	then	eerror "You must set paths in /etc/conf.d/${SVCNAME}"
@@ -292,52 +301,60 @@ Check () {
 	*)	LOCKFILE='/';; # Do not use the lockfile feature.
 	esac
 	: ${UMOUNT_OPTS=-i}
+	: ${COMPRESSION=xz}
 }
 
-Aufs () {
-	eval "Mount ${MOUNT_AUFS--i} -t aufs \
-		-o \"br:\${DIR_CHANGE}=rw:\${mount_squash}=rr\" \
+Aufs() {
+	mount_aufs_opt="br:${DIR_CHANGE}=rw:${mount_squash}=rr"
+	[ -z "${MOUNT_AUFS_OPTS%,}" ] || \
+		mount_aufs_opt="${mount_aufs_opt},${MOUNT_AUFS_OPTS%,}"
+	eval "Mount ${MOUNT_AUFS} -t aufs -o \"\${mount_aufs_opt}\" \
 		-- aufs \"\${DIRECTORY}\"" \
 	|| Warn ${?} "Failed mounting ${DIR_CHANGE} with aufs"
 }
 
-Unionfs () {
+Unionfs() {
 	eval "Mount ${MOUNT_UNIONFS} -t unionfs \
 		-o \"dirs=\${DIR_CHANGE}=rw:\${mount_squash}=ro\" \
 		-- unionfs \"\${DIRECTORY}\"" \
 	|| Warn ${?} "Failed mounting ${DIR_CHANGE} with unionfs"
 }
 
-UnionfsFuse () {
-	local uf
-	if ! uf="`Which unionfs`" || [ -z "${uf}" ] || ! test -e "${uf}"
+UnionfsFuse() {
+	if ! unionfsfuse="`Which unionfs`" || \
+		[ -z "${unionfsfuse}" ] || ! test -e "${unionfsfuse}"
 	then	ewarn "unionfs-fuse appears not to be installed"
 		return 1
 	fi
-	eval "\"\${uf}\" \
-	${MOUNT_UNIONFS_FUSE--o cow -o allow_other -o use_ino -o nonempty} \
+	if [ -z "${UNIONFS_FUSE_HIDE+set}" ]
+	then	if unionfs --help 2>&1 | grep -q hide_meta_files
+		then UNIONFS_FUSE_HIDE='-o hide_meta_files'
+		else UNIONFS_FUSE_HIDE=''
+		fi
+	fi
+	eval "\"\${unionfsfuse}\" \
+	${MOUNT_UNIONFS_FUSE--o cow -o allow_other -o use_ino -o nonempty $UNIONFS_FUSE_HIDE} \
 		\"\${DIR_CHANGE}=RW:\${mount_squash}=RO\" \
 		\"\${DIRECTORY}\"" || \
 	Warn ${?} "Failed mounting ${DIR_CHANGE} with unionfs-fuse"
 }
 
-Funionfs () {
-	local fu stat
-	if ! fu="`Which funionfs`" || [ -z "${fu}" ] || ! test -e "${fu}"
+Funionfs() {
+	if ! funionfs="`Which funionfs`" || \
+		[ -z "${funionfs}" ] || ! test -e "${funionfs}"
 	then	ewarn "funionfs appears not to be installed"
 		return 1
 	fi
-	eval "\"\${fu}\" \"\${DIR_CHANGE}\" \"\${DIRECTORY}\" \
+	eval "\"\${funionfs}\" \"\${DIR_CHANGE}\" \"\${DIRECTORY}\" \
 		${MOUNT_FUNIONFS--o allow_other -o nonempty} \
 		-o \"dirs=\${mount_squash}=ro\"" || \
 	Warn ${?} "Failed mounting ${DIR_CHANGE} with funionfs"
 }
 
-Mountunion () {
-	local tool
+Mountunion() {
 	[ -z "${ORDER}" ] && ORDER="aufs unionfs-fuse unionfs funionfs"
-	for tool in ${ORDER}
-	do	case "${tool}" in
+	for mountunion in ${ORDER}
+	do	case "${mountunion}" in
 		aufs)
 			Aufs && return 0;;
 		unionfs)
@@ -347,32 +364,31 @@ Mountunion () {
 		funionfs)
 			Funionfs && return 0;;
 		*)
-			ewarn "Strange entry in ORDER: ${tool}";;
+			ewarn "Strange entry in ORDER: ${mountunion}";;
 		esac
 	done
 	false
 }
 
-MountRW () {
-	local mountstat
+MountRW() {
 	Mkdir "${DIRECTORY}" || return
 	Mktempdir ${DIR_CHANGE_temp} DIR_CHANGE DIR_CHANGE_name || return
 	Mountunion && return
-	mountstat=${?}
+	mountrwstat=${?}
 	if Mount --rbind "${mount_squash}" -- "${DIRECTORY}"
 	then	einfo "Mounted ${DIRECTORY} readonly"
 	else	Error ${?} "Failed even rbinding ${DIRECTORY}"
 	fi
-	return ${mountstat}
+	return ${mountrwstat}
 }
 
-MountRO () {
+MountRO() {
 	Mkdir "${DIRECTORY}" || return
 	Mount --rbind "${mount_squash}" -- "${DIRECTORY}"
 	Error ${?} "Failed rbinding ${DIRECTORY}"
 }
 
-Mksquash () {
+Mksquash() {
 	mount_squash=''
 	if [ -z "${DIR_SQUASH}" ]
 	then	Mkdir "${DIRECTORY}" && mount_squash="${DIRECTORY}"
@@ -381,139 +397,146 @@ Mksquash () {
 	fi
 }
 
-start () {
-	local exitstat
+start() {
 	Check start || return
 	Mksquash || return
 	ebegin "Mounting ${FILE_SQFS} as ${DIRECTORY}"
 	if Mount -t squashfs -o loop,ro -- "${FILE_SQFS}" "${mount_squash}"
 	then	if [ -n "${DIR_CHANGE}" ]
 		then	MountRW
-			exitstat=${?}
+			startstat=${?}
 		elif [ -n "${DIR_SQUASH}" ]
 		then	MountRO
-			exitstat=${?}
-		else	exitstat=0
+			startstat=${?}
+		else	startstat=0
 		fi
-	else	exitstat=${?}
-		Error ${exitstat} \
+	else	startstat=${?}
+		Error ${startstat} \
 			"Failed mounting ${FILE_SQFS} as ${mount_squash}"
 		rmdir -- "${mount_squash}"
 	fi
-	eend ${exitstat}
+	eend ${startstat}
 }
 
-MvTbzOld () {
+MvTbzOld() {
 	[ -n "${FILE_TBZ_OLD}" ] || return 0
 	test -e "${FILE_TBZ}" || return 0
 	${MV_FILE_TBZ:-mv --} "${FILE_TBZ}" "${FILE_TBZ_OLD}"
 }
 
-MvSqfsOld () {
+MvSqfsOld() {
 	[ -n "${FILE_SQFS_OLD}" ] || return 0
 	test -e "${FILE_SQFS}" || return 0
 	${MV_FILE_SQFS:-mv --} "${FILE_SQFS}" "${FILE_SQFS_OLD}"
 }
 
-Rmdir () {
-	local parent rms
+Rmdir() {
 	case "${1}" in
 	''|0|n*|N*|f*|F*)
 		return 0;;
-	*p*)	parent=:;;
-	*)	parent=false;;
+	*p*)	rmdirparent=:;;
+	*)	rmdirparent=false;;
 	esac
 	[ -z "${2}" ] || ! test -d "${2}" && return
 	rmdir -- "${2}" || {
 		ewarn "could not remove ${2}"
 		return 1
 	}
-	${parent} && rmdir -p -- "${2%/*}" >/dev/null 2>&1
+	${rmdirparent} && rmdir -p -- "${2%/*}" >/dev/null 2>&1
 	return 0
 }
 
-ClearRw () {
+# Usage: ClearRw [keep] [action-before-first-removal]
+ClearRw() {
 	[ -z "${DIR_CHANGE}" ] || ! test -d "${DIR_CHANGE}" && return 0
 	Cleardir "${DIR_CHANGE}" "${@}" || return
 	Rmdir "${RM_DIR_CHANGE}" "${DIR_CHANGE}"
 }
 
-Tbzd () {
+Tbzd() {
 	[ -z "${FILE_TBZ}" ] && return 0
 	MvTbzOld
 	Error ${?} "Failed moving ${FILE_SQFS} -> ${FILE_SQFS_OLD}"
 	${TARCMD:-tar -cjf} "${FILE_TBZ}" "${DIRECTORY}/" >/dev/null
 }
 
-Sqfsd () {
-	local addoptions redirect
+Sqfsd() {
 	: ${TMP_SQFS:="${TMPDIR}/${SVCNAME}.sqfs.XXXXXXXX"}
 	Checktemp TMP_SQFS
 	${TMP_SQFS_temp} && Mktemp TMP_SQFS
 	chmod -- 644 "${TMP_SQFS}"
-	addoptions='-noappend'
-	redirect='>/dev/null'
+	sqfsdaddopt='-noappend'
+	sqfsdredir='>/dev/null'
 	case "${VERBOSE_MODE}" in
-	0)	addoptions="${addoptions} -no-progress";;
-	2)	redirect="";;
+	0)	sqfsdaddopt="${sqfsdaddopt} -no-progress";;
+	2)	sqfsdredir='';;
 	esac
+	[ -n "${COMPRESSION}" ] && \
+		sqfsdaddopt="${sqfsdaddopt} "'-comp "${COMPRESSION}"'
 	eval "mksquashfs \"\${DIRECTORY}\" \"\${TMP_SQFS}\" \
-		${addoptions} \${MKSQUASHFS} ${redirect}" \
+		${sqfsdaddopt} \${MKSQUASHFS} ${sqfsdredir}" \
 		&& MvSqfsOld \
 		&& mv -f -- "${TMP_SQFS}" "${FILE_SQFS}"
 }
 
-HaveMagic () {
+HaveMagic() {
 	: ${MAGIC_FILE:="${DIR_CHANGE}/.no-save"}
 	test -e "${MAGIC_FILE}"
 }
 
-CalcIgnore () {
-	local i_ r_ v_ b_
-	v_="${1}"
-	shift
-	r_="${1}"
-	case "${r_}" in
-	*' '*)	r_="'(' ${r_} ')'";;
-	esac
-	shift
-	b_=''
-	for i_
-	do	[ -n "${r_}" ] && b_=' -o '
-		[ -n "${i_}" ] && i_="/${i_}"
-		r_="${r_}${b_}-path \"\${DIR_CHANGE}${i_}\""
-	done
-	case "${v_}" in
-	@*)	v_="${v_#@}"
-		[ -n "${b_}" ] && r_="'(' ${r_} ')'";;
-	esac
-	eval "${v_}=\"\${r_}\""
+HaveKill() {
+	: ${KILL_FILE:="${DIR_CHANGE}/.No-save"}
+	test -e "${KILL_FILE}"
 }
 
-NeedSquash () {
-	local ignorefile ignoredir find
+CalcIgnore() {
+	calcignorev="${1}"
+	shift
+	calcignorer="${1}"
+	case "${calcignorer}" in
+	*' '*)	calcignorer="'(' ${calcignorer} ')'";;
+	esac
+	shift
+	calcignoreb=''
+	for calcignorei
+	do	[ -n "${calcignorer}" ] && calcignoreb=' -o '
+		[ -n "${calcignorei}" ] && calcignorei="/${calcignorei}"
+		calcignorer="${calcignorer}${calcignoreb}-path"
+		calcignorer="${calcignorer} \"\${DIR_CHANGE}${calcignorei}\""
+	done
+	case "${calcignorev}" in
+	'@'*)	calcignorev=${calcignorev#"@"}
+		[ -n "${calcignoreb}" ] && \
+			calcignorer="'(' ${calcignorer} ')'";;
+	esac
+	eval "${calcignorev}=\"\${calcignorer}\""
+}
+
+NeedSquash() {
 	[ -n "${DIR_CHANGE}" ] && test -d "${DIR_CHANGE}" || return 1
 	[ -n "${DIRECTORY}" ] && test -d "${DIRECTORY}" || return 1
-	eval "CalcIgnore @ignorefile \"\${IGNOREFILE}\" \
+	eval "CalcIgnore @needsquashif \"\${IGNOREFILE}\" \
 		${IGNORETOPFILE} \
 		\"._funionfs*\" \
 		.wh..wh.aufs"
-	eval "CalcIgnore @ignoredir \"\${IGNOREDIR}\" \
+	eval "CalcIgnore @needsquashid \"\${IGNOREDIR}\" \
 		${IGNORETOPDIR} \
 		.wh..wh.plink \
 		.wh..wh.plnk \
 		.wh..wh..tmp \
 		.wh..wh.orph \
 		.unionfs"
-	eval "CalcIgnore find \"\${IGNORE}\" \
+	eval "CalcIgnore needsquashc \"\${IGNORE}\" \
 		${IGNORETOP} \
 		\"\""
-	[ -n "${ignorefile}" ] && \
-		find="${find} -o '(' ${ignorefile} -type f ')'"
-	[ -n "${ignoredir}" ] && \
-		find="${find} -o '(' ${ignoredir} -type d -prune ')'"
-	find="find \"\${DIR_CHANGE}\" ${find} -o -exec "
-	eval "${find}/bin/false '{}' '+'" && return 1
+	[ -n "${needsquashif}" ] && \
+		needsquashc="${needsquashc} -o '(' ${needsquashif} -type f ')'"
+	[ -n "${needsquashid}" ] && {
+		needsquashc="${needsquashc} -o '(' ${needsquashid}"
+		needsquashc="${needsquashc} -type d -prune ')'"
+	}
+	needsquashc="find \"\${DIR_CHANGE}\" ${needsquashc} -o -exec "
+	eval "${needsquashc}/bin/false '{}' '+'" && return 1
 	[ -z "${IGNORETOUCH}" ] && return 0
 	# Do the time-consuming file-comparison only if it appears necessary:
 	(	d="for i
@@ -531,22 +554,21 @@ exit 1
 done
 :"
 		export DIR_CHANGE DIR_SQUASH
-		eval "! ${find}\"\${SHELL:-/bin/sh}\" -c \"\${d}\" sh '{}' '+'"
+		eval "! ${needsquashc}\"\${SHELL:-/bin/sh}\" -c \"\${d}\" sh '{}' '+'"
 	)
 }
 
-ExceedThreshold () {
-	local n
+ExceedThreshold() {
 	: ${THRESHOLD:=0}
 	[ ${THRESHOLD} -gt 0 ] || return 0
 	Normalize IGNORE_THRESHOLD || \
 		IGNORE_THRESHOLD="${DIR_CHANGE}/.do-save"
 	test -e "${IGNORE_THRESHOLD}" && return 0
-	n=`du -s -k -- "${DIR_CHANGE}" | cut -f 1`
-	[ "${THRESHOLD}" -le "${n}" ]
+	exceedthresholdn=`du -s -k -- "${DIR_CHANGE}" | cut -f 1`
+	[ "${THRESHOLD}" -le "${exceedthresholdn}" ]
 }
 
-RemoveThreshold () {
+RemoveThreshold() {
 	case "${IGNORE_THRESHOLD}" in
 	"${DIR_CHANGE}/"*)
 		test -f "${IGNORE_THRESHOLD}" || return 0
@@ -554,68 +576,116 @@ RemoveThreshold () {
 	esac
 }
 
-Store () {
-	local exitstat
+Store() {
+	if HaveKill
+	then	will_kill=kill
+		return 0
+	else	will_kill=false
+	fi
 	HaveMagic && return 0
 	ExceedThreshold || return 0
 	if ! NeedSquash
-	then	ClearRw "${KEEP}"
-		Error ${?} "Clearing ${DIR_CHANGE} failed"
-		return
+	then	will_kill=keep
+		return 0
 	fi
 	Normalize FILE_SQFS_OLD FILE_TBZ FILE_TBZ_OLD
 	ebegin "Squashing ${DIRECTORY} to ${FILE_SQFS}"
 	einfo "(this may take a while)"
 	RemoveThreshold
 	Sqfsd
-	exitstat=${?}
-	if [ ${exitstat} -eq 0 ]
+	storestat=${?}
+	if [ ${storestat} -eq 0 ]
 	then	if [ -n "${FILE_TBZ}" ]
-		then	eend ${exitstat}
+		then	eend ${storestat}
 			ebegin "Updating archive ${FILE_TBZ}"
 			einfo "(this may take a while)"
 			Tbzd
-			exitstat=${?}
-			Error ${exitstat} \
+			storestat=${?}
+			Error ${storestat} \
 				"Creating ${FILE_TBZ} failed"
 		fi
-		ClearRw
-		Error ${?} "Clearing ${DIR_CHANGE} failed"
-	else	Error ${exitstat} "Squashing ${DIRECTORY} failed"
+		will_kill=stored
+	else	Error ${storestat} "Squashing ${DIRECTORY} failed"
 	fi
-	eend ${exitstat}
-	return ${exitstat}
+	eend ${storestat}
+	return ${storestat}
 }
 
-UmountAll () {
-	local exitstat
+IsUmounted() {
+	if [ -z "${mountinfo}" ]
+	then	mountinfo="`Which mountinfo`" && [ -n "${mountinfo}" ] \
+			|| mountinfo=:
+	fi
+	! "${mountinfo}" -q "${1}"
+}
+
+UmountSquash() {
+	[ -n "${1}" ] && sleep ${1}
+	IsUmounted "${DIR_SQUASH}" || Umount -d -- "${DIR_SQUASH}" && return
+	umountstatsquash=${?}
+	Umount -d -- "${FILE_SQFS}" && IsUmounted "${DIR_SQUASH}" && return
+	return ${umountstatsquash}
+}
+
+UmountAll() {
 	ebegin "Unmounting ${DIRECTORY}"
-	Umount -- "${DIRECTORY}"
-	exitstat=${?}
+	IsUmounted "${DIRECTORY}" || Umount -- "${DIRECTORY}"
+	umountallstat=${?}
 	if [ -z "${DIR_SQUASH}" ]
-	then	eend ${exitstat}
-		return ${exitstat}
+	then	eend ${umountallstat}
+		return ${umountallstat}
 	fi
-	Umount -d -- "${DIR_SQUASH}" || Umount -d -- "${FILE_SQFS}" \
-		|| exitstat=${?}
+	UmountSquash >/dev/null 2>&1 \
+		|| UmountSquash 1s >/dev/null 2>&1 \
+		|| UmountSquash 1s \
+		|| umountallstat=${?}
 	Rmdir "${RM_DIR_SQUASH}" "${DIR_SQUASH}"
-	eend ${exitstat}
-	return ${exitstat}
+	eend ${umountallstat}
+	return ${umountallstat}
 }
 
-RmNamefile () {
+RmNamefile() {
 	${use_name_file} || return 0
 	[ -n "${NAME_FILE}" ] && rm -- "${NAME_FILE}" && return
 	Error ${?} "cannot remove file ${NAME_FILE}"
 }
 
-stop () {
-	Check && Store && UmountAll && RmNamefile
+KillBegin() {
+	ebegin "${1} ${DIR_CHANGE}"
+	kill_eend=eend
 }
 
-will_squash () {
-	local nomagic exceed ret s
+DoKill() {
+	kill_eend=:
+	case ${will_kill} in
+	kill)
+		ClearRw "${KILL_NOT}" 'KillBegin "Killing"'
+	;;
+	keep)
+		ClearRw "${KEEP}"
+	;;
+	stored)
+		ClearRw
+	;;
+	esac
+	kill_stat=${?}
+	Error ${kill_stat} "Clearing ${DIR_CHANGE} failed"
+	${kill_eend} ${kill_stat}
+	return ${kill_stat}
+}
+
+stop() {
+	Check && Store && UmountAll && DoKill && RmNamefile
+}
+
+will_squash() {
 	Check || return ${?}
+	if HaveKill
+	then	echo 1 >&2
+		einfo "Have found kill-file ${KILL_FILE}"
+		einfo "Will delete ${DIR_CHANGE}"
+		return 0
+	fi
 	HaveMagic && nomagic=false || nomagic=:
 	ExceedThreshold && exceed=: || exceed=false
 	if ${nomagic} && ${exceed} && NeedSquash
@@ -641,7 +711,7 @@ will_squash () {
 	return ${ret}
 }
 
-need_squash () {
+need_squash() {
 	Check || return ${?}
 	if NeedSquash
 	then	echo 1 >&2
@@ -659,7 +729,7 @@ need_squash () {
 	return 1
 }
 
-have_magic () {
+have_magic() {
 	Check || return ${?}
 	if HaveMagic
 	then	echo 1 >&2
@@ -671,13 +741,25 @@ have_magic () {
 	return 1
 }
 
-print_dir_change () {
+have_kill() {
+	Check || return ${?}
+	if HaveKill
+	then	echo 1 >&2
+		einfo "Kill-file ${KILL_FILE} exists."
+		return 0
+	fi
+	echo 0 >&2
+	einfo "No kill-file ${KILL_FILE} exists."
+	return 1
+}
+
+print_dir_change() {
 	Check || return ${?}
 	printf '%s/' "${DIR_CHANGE}" >&2
 	return 0
 }
 
-print_dir_squash () {
+print_dir_squash() {
 	Check || return ${?}
 	printf '%s/' "${DIR_SQUASH}" >&2
 	return 0

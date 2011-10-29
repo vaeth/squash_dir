@@ -1,3 +1,0 @@
-This is a patch for mksquashfs (of the corresponding squashfs-tools version).
-The patch will cause mksquashfs to redirect the progress bar to stderr
-which gives a more convenient display for squash_dir.

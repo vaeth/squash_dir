@@ -1,0 +1,17 @@
+#compdef squash_dir
+_arguments -s -S -A '-*' : \
+'-s[squash always\: create temporarily $DIR_CHANGE/.do-save]' \
+'-n[no squashing\:  create temporarily $DIR_CHANGE/.no-save]' \
+'-k[kill changes\:  create temporarily $DIR_CHANGE/.No-save]' \
+'-f[force restart; if combined with -s or -n create files anyway]' \
+'-E[do not stop at first error]' \
+'-t[do not support titlebar display]' \
+'-e[cancel previous -e]' \
+'-T[cancel previous -t]' \
+'-S[cancel previous -s]' \
+'-N[cancel previous -n]' \
+'-F[cancel previous -f]' \
+'-K[cancel previous -k]' \
+'(1 * -)'{'-h','-H','-\\?'}'[help]' \
+'1:action:(status show list info print restart stop start zap)' \
+'*:names:compadd -- /etc/init.d/squash_*(@:t:s/squash_/)'

@@ -1,9 +1,16 @@
 #! /usr/bin/env sh
 
+category="sys-fs"
+project="squash_dir"
+
 export LC_ALL
 LC_ALL=C
 
-Die () {
+Echo() {
+	printf '%s\n' "${*}"
+}
+
+Die() {
 	printf '%s: %s\n' "${0##*/}" "${1}" >&2
 	exit ${2:-1}
 }
@@ -14,77 +21,78 @@ curr='.'
 distdir="`portageq distdir`"
 [ -n "${distdir}" ] && test -d "${distdir}" || Die "cannot determine DISTDIR"
 
-GetEdir () {
-	local o i j
-	o="`portageq portdir_overlay`"
-	for i in ${o}
-	do	edir="${i}/sys-fs/squash_dir"
+GetEdir() {
+	reverse=''
+	for overlay in `portageq portdir_overlay`
+	do	reverse="${overlay} ${reverse}"
+	done
+	for overlay in ${reverse}
+	do	edir="${overlay}/${category}/${project}"
 		test -d "${edir}" || continue
-		test -r "${i}/profiles/repo_name" \
-		&& repo_name=`cat -- "${i}"/profiles/repo_name` \
-		|| repo_name=''
-		return 0
+		for jebuild in "${edir}/${project}-"*.ebuild
+		do	case "${jebuild##*/}" in
+				"${project}-9999"*) continue;;
+			esac
+			test -f "${jebuild}" || continue
+			test -r "${overlay}/profiles/repo_name" && \
+			repo_name=`cat -- "${overlay}"/profiles/repo_name` || \
+			repo_name=''
+			return 0
+		done
 	done
 	return 1
 }
-GetEdir || Die "cannot find sys-fs/squash_dir in overlay.
-You need at least an empty directory by that name in the overlay
-so that this script knows where to install the ebuild."
+GetEdir || Die "cannot find ${category}/${project} in overlay"
 
-MoveEbuild () {
-	local k n
+MoveEbuild() {
 	test -f "${1}" && return
-	n=''
-	for k in "${edir}"/squash_dir-*.ebuild
-	do	case "${k}" in
-		*999.ebuild)	continue;;
+	latest=''
+	for find_latest in "${edir}/${project}-"*.ebuild
+	do	case "${find_latest##*/}" in
+		"${project}-"*9999.ebuild)	continue;;
 		esac
-		test -f "${k}" && n="${k}"
+		test -f "${find_latest}" && latest="${find_latest}"
 	done
-	[ -n "${n}" ] || return
-	printf '%s\n' "Moving ${n} -> ${1##*/}"
-	mv -- "${n}" "${1}" || Die "cannot mv ${n} ${1}"
+	[ -n "${latest}" ] || return
+	Echo "Moving ${latest} -> ${1##*/}"
+	mv -- "${latest}" "${1}" || Die "cannot mv ${latest} ${1}"
 }
 
-RmOpt () {
+RmOpt() {
 	! test -f "${1}" || rm -- "${1}"
 }
 
-InstallEbuildVersion () {
+InstallEbuildVersion() {
 	chown portage:portage -- "${1}"
 	chmod 664 -- "${1}"
-	printf '%s\n' "Moving ${1} -> ${distdir}"
+	Echo "Moving ${1} -> ${distdir}"
 	mv -- "${1}" "${distdir}/${1##*/}"
-	MoveEbuild "${edir}/squash_dir-${2}.ebuild" || \
-		Die "failed to create ${edir}"
+	MoveEbuild "${edir}/${project}-${2}.ebuild" || \
+		Die "failed to rename ebuild in ${edir}"
 	(	cd -- "${edir}" || Die "cannot change to ${edir}"
 		RmOpt "Manifest" || Die "cannot remove Manifest"
-		printf '%s\n' "ebuild ${edir}/squash_dir-${2}.ebuild manifest"
-		ebuild -- "squash_dir-${2}.ebuild" manifest \
+		Echo "ebuild ${edir}/${project}-${2}.ebuild manifest"
+		ebuild -- "${project}-${2}.ebuild" manifest \
 			|| Die "ebuild failed"
 	) || exit
 	if [ -n "${repo_name}" ] && command -v egencache >/dev/null 2>&1
-	then	printf '%s\n' "egencache --repo=${repo_name} --update"
+	then	Echo "egencache --repo=${repo_name} --update"
 		egencache --repo="${repo_name}" --update || \
 			Die "egencache failed"
 	fi
-	printf '%s\n' "emerge -1 =sys-fs/squash_dir-${2}"
-	exec emerge -1 -- "=sys-fs/squash_dir-${2}"
+	Echo "emerge -1 =${category}/${project}-${2}"
+	exec emerge -1 -- "=${category}/${project}-${2}"
 	Die "cannot execute emerge"
 }
 
-DoFirst () {
-	local i j v
-	for j in tar.xz tar.lzma tar.bz2 tar.gz zip tar.Z shar.gz shar
-	do	for i in "${curr}"/squash_dir-*."${j}"
-		do	test -e "${i}" || continue
-			v="${i##*/squash_dir-}"
-			v=${v%".${j}"}
-			InstallEbuildVersion "${i}" "${v}"
-			return
-		done
+for j in tar.xz tar.lzma tar.bz2 tar.gz zip tar.Z shar.gz shar
+do	for i in "${curr}/${project}-"*."${j}"
+	do	test -e "${i}" || continue
+		v="${i##*/}"
+		v=${v#"${project}-"}
+		v=${v%".${j}"}
+		InstallEbuildVersion "${i}" "${v}"
+		exit
 	done
-	Die "No tarball found in ${curr}"
-}
-
-DoFirst || exit
+done
+Die "No tarball found in ${curr}"

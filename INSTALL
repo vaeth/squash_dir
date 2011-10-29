@@ -13,21 +13,34 @@ the package. The mv overlay can be found at
 	http://git.overlays.gentoo.org/gitweb/?p=user/mv.git;a=tree
 and can be installed with layman ("layman -f" followed by "layman -a mv").
 
+It is recommended to install also sys-fs/squashfs-tools from the same overlay
+with USE=progress-redirect:
+This will apply a patch to redirect the progress bar of mksquashfs to stderr
+which will let squash_dir display that progress bar.
+
 2. Manual installation
 ======================
 
 Call as root
 	cp -p init.d/squash_dir /etc/init.d/squash_dir
-	cp -p squash-dir /usr/sbin
-(and apply the patches from squashfs-tools-patch to squashfs-tools if you
-want them).
+	cp -p sbin/squash_dir /usr/sbin
+	cp -p zsh/_squash_dir /usr/share/zsh/site-functions
+
+Here you can find the patches which redirect the progress bar of
+mksquashfs to stderr:
+
+http://git.overlays.gentoo.org/gitweb/?p=user/mv.git;a=tree;f=sys-fs/squashfs-tools/files
+
+You can download the corresponding version and apply the patch manually with:
+	cd "directory of squashfs-tools sources"
+	patch -p0 <path-to-the-patch
 
 3. Manual installation using autotools
 ======================================
 
 Call
 
-mk/make (or, more or less equivalently, ./autogen.sh && ./configure && make)
+./mk/make (or, more or less equivalently, ./autogen.sh && ./configure && make)
 
 and then as root
 
@@ -35,16 +48,3 @@ make install
 
 The behaviour of "./configure" and "make" is the standard one of
 projects using autotools as the build system.
-There are only three special options:
-	--enable-squashfs-tools-patch
-	--disable-squashfs-tools-patch
-(with mk/make, these are the options -p/-P)
-which determine whether a patch for squashfs-tools will be activated
-by creating and installing the file /etc/portage/env/sys-fs/squashfs-tools.
-The third special option is only important if you enable these patches and
-intend to compress them manually after installation. In that case you should
-also use
-	--with-decompress="command for corresponding decompressor"
-(with mk/make, this is the option -d). The decompression command must expect
-one further argument (the path of the compressed file) and send it decompressed
-to stdout. A typical example is "xz -dc --".

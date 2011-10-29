@@ -6,37 +6,22 @@ AUTOMAKE_OPTIONS = foreign 1.10 no-dist-gzip dist-bzip2
 EXTRA_DIST = \
 mk \
 autogen.sh \
-INSTALL
+INSTALL \
+zsh/_squash_dir
 
 dist_doc_DATA = \
 README \
 AUTHORS \
 ChangeLog
 
-CLEANFILES = \
-portage/env/sys-fs/squashfs-tools
-
-dist_noinst_DATA = \
-portage/env/sys-fs/squashfs-tools.in
-
-nobase_dist_doc_DATA = \
-squashfs-tools-patch/README \
-squashfs-tools-patch/squashfs-tools-3.3-progress-stderr.patch \
-squashfs-tools-patch/squashfs-tools-3.4-progress-stderr.patch \
-squashfs-tools-patch/squashfs-tools-4.0-progress-stderr.patch
-
-# Actually, this should be ..._SCRIPTS, but this is not allowed.
-# So we cheat that it is data and change permissions in install-data-hook:
-nobase_dist_sysconf_DATA = \
+# Actually, we want nobase_dist_sysconf_SCRIPTS,
+# but stupid automake claims it knows better than me and forbids this.
+pkgdatadir=$(sysconfdir)
+nobase_dist_pkgdata_SCRIPTS = \
 init.d/squash_dir
 
 dist_sbin_SCRIPTS = \
-squash-dir
-
-if SQUASHFS_TOOLS_PATCH
-nobase_nodist_sysconf_DATA = \
-portage/env/sys-fs/squashfs-tools
-endif
+sbin/squash_dir
 
 # Remove things created by autogen.sh
 maintainer-clean-local:
@@ -49,15 +34,8 @@ dist-hook:
 	$(AM_V_at)$(RM) -fr "$(distdir)/build" "$(distdir)/config" "$(distdir)/m4"
 	$(AM_V_at)$(RM) "$(distdir)/aclocal.m4" "$(distdir)/Makefile.in" "$(distdir)/configure"
 
-install-data-hook:
-	$(AM_V_at)for i in $(nobase_dist_sysconf_DATA); do chmod a+x -- "$(DESTDIR)$(sysconfdir)/$${i}"; done
+install-data-local:
+	$(AM_V_at)test x"$(ZSH_COMPLETION)" = x"" || $(INSTALL_DATA) -D "$(srcdir)/zsh/_squash_dir" "$(DESTDIR)$(ZSH_COMPLETION)/_squash_dir"
 
-SUFFIXES = .in
-.in:
-	$(AM_V_GEN)$(SED) \
-		-e "s,\@PACKAGE_STRING\@,$(PACKAGE_STRING),g" \
-		-e "s,\@PACKAGE\@,$(PACKAGE),g" \
-		-e "s,\@SYSCONFDIR\@,$(sysconfdir),g" \
-		-e "s,\@DOCDIR\@,$(docdir),g" \
-		-e "s,\@DECOMPRESS\@,$(DECOMPRESS),g" \
-	"$<" > "$@"
+uninstall-local:
+	$(AM_V_at)test x"$(ZSH_COMPLETION)" = x"" || $(RM) "$(DESTDIR)$(ZSH_COMPLETION)/_squash_dir"
