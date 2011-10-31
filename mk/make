@@ -64,6 +64,6 @@ ${earlystop} && exit
 Info "Making ${*}..."
 command -v make >/dev/null 2>&1 || Die "cannot find make"
 if ${quiet}
-then	exec make ${jarg} "${@}" >/dev/null 2>&1
+then	exec make ${jarg} "${@}" >/dev/null
 else	exec make ${jarg} "${@}"
 fi

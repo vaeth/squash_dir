@@ -73,6 +73,3 @@ Eecho "git tag -a release-${ver} -m ..."
 git tag -a "release-${ver}" \
 	-m "Tagging the ${ver} release of the ${proj} project" || \
 		Die "git tagging failed"
-ExecWarn git repack
-ExecWarn git prune
-ExecWarn git gc
