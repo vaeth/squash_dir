@@ -22,7 +22,8 @@ Exec() {
 Usage() {
 	Echo "Usage: ${0##*/}
 Marks a new release in the git repository.
-Verify in advance to have AC_INIT set correctly in configure.ac"
+Verify in advance to have AC_INIT set correctly in configure.ac
+and that you have committed your last changes."
 	exit ${1:-1}
 }
 
@@ -59,7 +60,7 @@ keycheck() {
 		stty ${t}
 		case "${a}" in
 		n*|N*)	printf '%s\n' "No"
-			exit 1
+			return 1
 			;;
 		y*|Y*)	printf '%s\n' "Yes"
 			return
@@ -68,8 +69,58 @@ keycheck() {
 	done
 }
 
-keycheck "Are you sure you want to tag ${proj}-${ver}"
-Eecho "git tag -a release-${ver} -m ..."
-git tag -a "release-${ver}" \
-	-m "Tagging the ${ver} release of the ${proj} project" || \
-		Die "git tagging failed"
+Echo "Usage of this script requires that you committed the latest changes"
+if keycheck "Are you sure you want to tag release-${ver} of ${proj}"
+then	Eecho "git tag -a release-${ver} -m ..."
+	git tag -a "release-${ver}" \
+		-m "Tagging the ${ver} release of the ${proj} project" || \
+		keycheck "git tagging failed. Continue anyway" || exit 2
+fi
+
+keycheck '
+Optionally, you can keep a tarball branch with the current tarball content.
+This is only reasonable if the only reasonable way to publish the tarball is
+its automatic generation directly from the git repository.
+Otherwise, this would be just a waste of space.
+
+To use this option, you must have created the tarball first.
+
+Have you done this, and do you want to update the tarball branch' || exit 0
+for j in tar.xz tar.lzma tar.bz2 tar.gz zip tar.Z shar.gz shar
+do	tarball="${proj}-${ver}.${j}"
+	test -f "${tarball}" && break
+done
+test -f "${tarball}" || \
+	Die "You must first create the tarball with ./mk/tarball"
+
+# The rest must be a function, since the original file
+# will be removed during execution, and so parsing of this file might fail
+
+tag_tarball() {
+	ExecDie git checkout -B tarball
+	ExecDie tar xaf "${tarball}"
+
+	Echo "Replacing content by unpacked tarball"
+	for i in *
+	do	[ "${i}" = "${proj}-${ver}" ] || rm -rf "./${i}"
+	done
+	Eecho "mv ${proj}-ver/* ."
+	mv "${proj}-${ver}"/* . || Die "mv ${proj}-${ver}/* . failed"
+	ExecDie rmdir "${proj}-${ver}"
+
+	ExecWarn git merge master
+	ExecWarn git add .
+	Eecho "git commit -a -m ..."
+	git commit -a -m "tarball ${proj}-${ver} preparation" || \
+		keycheck "This is only ok if there is nothing to commit.
+Otherwise you should better stop now and call git checkout master.
+Are you sure you want to tag tarball ${proj}-${ver} anyway" || exit 1
+	Eecho "git tag -a tarball-${ver} -m ..."
+	git tag -a "tarball-${ver}" \
+		-m "Tagging the ${ver} tarball of the ${proj} project" || \
+		Warn "git tagging failed"
+	ExecWarn git checkout master
+	exit
+}
+
+tag_tarball

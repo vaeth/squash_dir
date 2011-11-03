@@ -59,7 +59,8 @@ do	opt="${1#-}"
 		fakeroot='';;
 	h*|H*|'?')
 		Usage 0;;
-	*)	Usage;;
+	*)
+		Usage;;
 	esac
 	shift
 done
