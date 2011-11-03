@@ -551,7 +551,7 @@ exit 1
 done
 :"
 		export DIR_CHANGE DIR_SQUASH
-		eval "! ${needsquashc}\"\${SHELL:-/bin/sh}\" -c \"\${d}\" sh '{}' '+'"
+		eval "! ${needsquashc}\"\${SHELL:-/bin/sh}\" -c -- \"\${d}\" sh '{}' '+'"
 	)
 }
 
