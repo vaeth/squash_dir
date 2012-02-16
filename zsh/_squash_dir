@@ -5,7 +5,7 @@ _arguments -s -S -A '-*' : \
 '-k[kill changes\:  create temporarily $DIR_CHANGE/.No-save]' \
 '-f[force restart; if combined with -s or -n create files anyway]' \
 '-E[do not stop at first error]' \
-'-t[do not support titlebar display]' \
+'-H[do not support status line display]' \
 '-a[alphabetic order]' \
 '-e[cancel previous -E]' \
 '-T[cancel previous -t]' \

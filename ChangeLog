@@ -1,5 +1,9 @@
 # ChangeLog for squash_dir
 
+*squash_dir-11.4
+	Martin Väth <martin at mvath.de>:
+	- Support also soft status line (screen). Change status line option.
+
 *squash_dir-11.3
 	Martin Väth <martin at mvath.de>:
 	- Fix treatment of sh -c: -c does not take an argument

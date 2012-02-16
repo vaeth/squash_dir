@@ -1,9 +1,11 @@
 #! /usr/bin/env sh
-# (C) Martin Väth <martin@mvath.de>
+# (C) Martin V\"ath <martin@mvath.de>
 
 have_set_title=false
 Title() {
-	${notitle} || printf '\033]0;%s: %s\007' "${0##*/}" "${*}"
+	! ${statusline} || return
+	! ${softstatus} || printf '\033k%s: %s\\' "${0##*/}" "${*}"
+	printf '\033]0;%s: %s\007' "${0##*/}" "${*}"
 	have_set_title=:
 }
 
@@ -51,6 +53,7 @@ Options:
       Use with extreme care!
   -e  Skip rest after first error (default)
   -E  Do not skip rest after first error
+  -H  Do not modify status line
   -S  Cancel previous -s
   -N  Cancel previous -n
   -F  Cancel previous -f
@@ -67,10 +70,10 @@ error_skip=:
 save_force=false
 keep_force=false
 kill_force=false
-notitle=false
+statusline=:
 alpha_order=false
 OPTIND=1
-while getopts 'sSnNfFkKeEtTaA?hH' opt
+while getopts 'sSnNfFkKeEHaAh?' opt
 do	case "${opt}" in
 	s) save_force=:;;
 	S) save_force=false;;
@@ -82,14 +85,25 @@ do	case "${opt}" in
 	K) kill_force=false;;
 	e) error_skip=:;;
 	E) error_skip=false;;
-	t) notitle=:;;
-	T) notitle=false;;
+	H) statusline=false;;
 	a) alpha_order=:;;
 	A) alpha_order=false;;
 	*) Usage 0;;
 	esac
 done
 shift $(( ${OPTIND} - 1 ))
+
+${statusline} && case "${TERM}" in
+screen*)
+	softstatus=:
+;;
+xterm*|rxvt*|aterm*|konsole*|gnome*|Eterm*|kterm*|interix*)
+	softstatus=false
+;;
+*)
+	statusline=false
+;;
+esac
 
 PrintInit() {
 	printf "%-${max_len:-40}s " "${*}"

@@ -1,5 +1,4 @@
-# Copyright (c)
-#  Martin Väth <martin@mvath.de>
+# (C) Martin V\"ath <martin@mvath.de>
 
 AUTOMAKE_OPTIONS = foreign 1.10 no-dist-gzip dist-bzip2
 
