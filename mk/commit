@@ -5,7 +5,7 @@ LC_ALL=C
 umask 022
 
 Die() {
-	s="${?}"
+	s=${?}
 	printf '%s\n' "${1}" >&2
 	exit ${2:-${s}}
 }

@@ -3,8 +3,16 @@
 export LC_ALL
 LC_ALL=C
 
+Echo() {
+	printf '%s\n' "${@}"
+}
+
+Info() {
+	Echo '%s\n' "${*}"
+}
+
 Usage() {
-	printf '%s\n' "Usage: ${0##*/} [options] args-for-make
+	Echo "Usage: ${0##*/} [options] args-for-make
 Available options are
   -q  quiet
   -n  Stop after ./configure, i.e. do not run make
@@ -13,12 +21,8 @@ Available options are
 	exit ${1:-1}
 }
 
-Info() {
-	printf '%s\n' "${*}"
-}
-
 Die() {
-	printf '%s: %s\n' "${0##*/}" "${1}"
+	Echo "${0##*/}: ${1}" >&2
 	exit ${2:-1}
 }
 
@@ -29,13 +33,13 @@ jarg='-j3'
 enablepatch=false
 configure_extra='--prefix=/usr'
 OPTIND=1
-while getopts 'qnrj:?hH' opt
-do	case "${opt}" in
-	q) quiet=:;;
-	n) earlystop=:;;
-	r) use_chown=:;;
-	j) [ -n "${OPTARG}" ] && jarg='-j${OPTARG}' || jarg='';;
-	*) Usage 0;;
+while getopts 'qnrj:hH?' opt
+do	case ${opt} in
+	q)	quiet=:;;
+	n)	earlystop=:;;
+	r)	use_chown=:;;
+	j)	jarg="${OPTARG:+-j}${OPTARG}";;
+	*)	Usage 0;;
 	esac
 done
 if [ ${OPTIND} -gt 1 ]

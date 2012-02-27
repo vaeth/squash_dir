@@ -46,9 +46,9 @@ Mkdir() {
 Normalize() {
 	normalizestat=0
 	for normalizei
-	do	eval "normalizen=\"\${${normalizei}}\""
+	do	eval "normalizen=\${${normalizei}}"
 		if [ -z "${normalizen}" ]
-		then	eval "${normalizei}=\"\""
+		then	eval "${normalizei}=''"
 			normalizestat=1
 			continue
 		fi
@@ -56,29 +56,29 @@ Normalize() {
 		then	normalizep=`"${readlink}" -f -- "${normalizen}"`
 		else	normalizep=`cd -P -- "${normalizen}" >/dev/null 2>&1 \
 				&& printf '%sA' "${PWD}"` \
-				&& normalizep="${normalizep%A}"
-		fi && [ -n "${normalizep}" ] && normalizen="${normalizep}"
-		while ! case "${normalizen}" in
+				&& normalizep=${normalizep%A}
+		fi && [ -n "${normalizep}" ] && normalizen=${normalizep}
+		while ! case ${normalizen} in
 			*//*)	false;;
 			esac
 		do	normalizen="${normalizen%%//*}/${normalizen#*//}"
 		done
-		[ "${normalizen}" != '/' ] && normalizen="${normalizen%/}"
-		eval "${normalizei}"'="${normalizen}"'
+		[ "${normalizen}" != '/' ] && normalizen=${normalizen%/}
+		eval "${normalizei}=\${normalizen}"
 	done
 	return ${normalizestat}
 }
 
 Mktemp() {
 	mktempstat=0
-	eval "mktempn=\"\${${1}}\""
+	eval "mktempn=\${${1}}"
 	Mkdir "${mktempn%/*}" || mktempstat=${?}
 	if [ ${mktempstat} -eq 0 ]
 	then	mktempn=`mktemp ${2} -- "${mktempn}"` || \
 			Error ${?} "mktemp ${2} ${mktempn} failed"
 		mktempstat=${?}
 		[ -n "${2}" ] && chmod 755 -- "${mktempn}"
-		eval "${1}"'="${mktempn}"'
+		eval "${1}=\${mktempn}"
 	fi
 	Normalize ${1} && return ${mktempstat}
 }
@@ -91,9 +91,9 @@ Mktempdir() {
 	fi
 	Mktemp ${2} -d
 	mktempdirtstat=${?}
-	eval "mktempdirv=\"\${${2}}\""
-	mktempdirv="${mktempdirv%/}"
-	case "${mktempdirv}" in
+	eval "mktempdirv=\${${2}}"
+	mktempdirv=${mktempdirv%/}
+	case ${mktempdirv} in
 	/*)	:;;
 	*)	return ${mktempdirtstat};;
 	esac
@@ -134,12 +134,12 @@ Mount() {
 
 # Usage: Cleardir directory [keep] [action-before-first-removal]
 Cleardir() {
-	cleardird="${1}"
+	cleardird=${1}
 	test -d "${cleardird}" || return
-	cleardire="${2:+|}${2}"
-	cleardirt="${3:-:}"
+	cleardire=${2:+|}${2}
+	cleardirt=${3:-:}
 	eval "for cleardiri in \"\${cleardird}\"/* \"\${cleardird}\"/.*
-	do	case \"\${cleardiri##*/}\" in
+	do	case \${cleardiri##*/} in
 		''|.|..${cleardire})	continue;;
 		'*'|'.*')	test -e \"\${cleardiri}\" || continue;;
 		esac
@@ -163,7 +163,7 @@ Compare() {
 }
 
 Checktemp() {
-	eval "case \"\${${1}}\" in
+	eval "case \${${1}} in
 	*XXXXXX)
 		${1}_temp=:
 		[ ${#} -eq 2 ] && : \${RM_${1}:=${2}};;
@@ -182,18 +182,18 @@ Readtemps() {
 ${readtempsc}
 "
 	for readtempsi in DIR_SQUASH DIR_CHANGE
-	do	eval "readtempsj=\"\${${readtempsi}}\"
+	do	eval "readtempsj=\${${readtempsi}}
 readtempsk=\${readtempsc##*\"
 \${readtempsi}_name='\"}
 \${${readtempsi}_temp}" || continue
 		readtempsk=${readtempsk%%"'
 "*}
-		case "${readtempsk}" in
+		case ${readtempsk} in
 		''|*/*)
 			eend 1 "broken ${readtempsi}_name in ${NAME_FILE}"
 			return;;
 		esac
-		eval "${readtempsi}=\"\${readtempsj%/*}/\${readtempsk}\""
+		eval "${readtempsi}=\${readtempsj%/*}/\${readtempsk}"
 	done
 }
 
@@ -207,7 +207,7 @@ CreateFirstTime() {
 		eerror "Exiting without doing anything."
 		return 2
 	}
-	case "${FILE_SQFS}" in
+	case ${FILE_SQFS} in
 	"${DIRECTORY}"/*|"${DIR_CHANGE}"/*|"${DIR_SQUASH}"/*|'/.sqfs'|'/')
 		false;;
 	/*)	! test -e "${FILE_SQFS}";;
@@ -242,12 +242,12 @@ CreateFirstTime() {
 }
 
 Check() {
-	readlink="`Which readlink`" || readlink=''
-	[ -n "${DIRECTORY}" ] && : ${FILE_SQFS:="${DIRECTORY}.sqfs"}
+	readlink=`Which readlink` || readlink=''
+	[ -n "${DIRECTORY}" ] && : ${FILE_SQFS:=${DIRECTORY}.sqfs}
 	for checki in "${DIRECTORY}" "${DIR_CHANGE}" "${DIR_SQUASH}" \
 		"${TMPDIR}" "${FILE_SQFS}" "${FILE_SQFS_OLD}" \
 		"${FILE_TBZ}" "${FILE_TBZ_OLD}" "${NAME_FILE}"
-	do	case "${checki}" in
+	do	case ${checki} in
 		''|/*)	continue;;
 		esac
 		eend 2 "${checki} is not an absolute path"
@@ -293,8 +293,8 @@ Check() {
 			return
 		fi
 	fi
-	case "${LOCKFILE}" in
-	''|/*)	: ${LOCKFILE:='/etc/mtab.lock'};;
+	case ${LOCKFILE} in
+	''|/*)	: ${LOCKFILE:=/etc/mtab.lock};;
 	*)	LOCKFILE='/';; # Do not use the lockfile feature.
 	esac
 	: ${UMOUNT_OPTS=-i}
@@ -318,15 +318,15 @@ Unionfs() {
 }
 
 UnionfsFuse() {
-	if ! unionfsfuse="`Which unionfs`" || \
+	if ! unionfsfuse=`Which unionfs` || \
 		[ -z "${unionfsfuse}" ] || ! test -e "${unionfsfuse}"
 	then	ewarn "unionfs-fuse appears not to be installed"
 		return 1
 	fi
 	if [ -z "${UNIONFS_FUSE_HIDE+set}" ]
 	then	if unionfs --help 2>&1 | grep -q hide_meta_files
-		then UNIONFS_FUSE_HIDE='-o hide_meta_files'
-		else UNIONFS_FUSE_HIDE=''
+		then	UNIONFS_FUSE_HIDE='-o hide_meta_files'
+		else	UNIONFS_FUSE_HIDE=''
 		fi
 	fi
 	eval "\"\${unionfsfuse}\" \
@@ -337,7 +337,7 @@ UnionfsFuse() {
 }
 
 Funionfs() {
-	if ! funionfs="`Which funionfs`" || \
+	if ! funionfs=`Which funionfs` || \
 		[ -z "${funionfs}" ] || ! test -e "${funionfs}"
 	then	ewarn "funionfs appears not to be installed"
 		return 1
@@ -349,9 +349,8 @@ Funionfs() {
 }
 
 Mountunion() {
-	[ -z "${ORDER}" ] && ORDER="aufs unionfs-fuse unionfs funionfs"
-	for mountunion in ${ORDER}
-	do	case "${mountunion}" in
+	for mountunion in ${ORDER-aufs unionfs-fuse unionfs funionfs}
+	do	case ${mountunion} in
 		aufs)
 			Aufs && return 0;;
 		unionfs)
@@ -388,9 +387,9 @@ MountRO() {
 Mksquash() {
 	mount_squash=''
 	if [ -z "${DIR_SQUASH}" ]
-	then	Mkdir "${DIRECTORY}" && mount_squash="${DIRECTORY}"
+	then	Mkdir "${DIRECTORY}" && mount_squash=${DIRECTORY}
 	else	Mktempdir ${DIR_SQUASH_temp} DIR_SQUASH DIR_SQUASH_name && \
-			mount_squash="${DIR_SQUASH}"
+			mount_squash=${DIR_SQUASH}
 	fi
 }
 
@@ -428,8 +427,8 @@ MvSqfsOld() {
 }
 
 Rmdir() {
-	case "${1}" in
-	''|0|n*|N*|f*|F*)
+	case ${1:-0} in
+	0|n*|N*|f*|F*)
 		return 0;;
 	*p*)	rmdirparent=:;;
 	*)	rmdirparent=false;;
@@ -458,13 +457,13 @@ Tbzd() {
 }
 
 Sqfsd() {
-	: ${TMP_SQFS:="${TMPDIR}/${SVCNAME}.sqfs.XXXXXXXX"}
+	: ${TMP_SQFS:=${TMPDIR}/${SVCNAME}.sqfs.XXXXXXXX}
 	Checktemp TMP_SQFS
 	${TMP_SQFS_temp} && Mktemp TMP_SQFS
 	chmod -- 644 "${TMP_SQFS}"
 	sqfsdaddopt='-noappend'
 	sqfsdredir='>/dev/null'
-	case "${VERBOSE_MODE}" in
+	case ${VERBOSE_MODE} in
 	0)	sqfsdaddopt="${sqfsdaddopt} -no-progress";;
 	2)	sqfsdredir='';;
 	esac
@@ -477,20 +476,20 @@ Sqfsd() {
 }
 
 HaveMagic() {
-	: ${MAGIC_FILE:="${DIR_CHANGE}/.no-save"}
+	: ${MAGIC_FILE:=${DIR_CHANGE}/.no-save}
 	test -e "${MAGIC_FILE}"
 }
 
 HaveKill() {
-	: ${KILL_FILE:="${DIR_CHANGE}/.No-save"}
+	: ${KILL_FILE:=${DIR_CHANGE}/.No-save}
 	test -e "${KILL_FILE}"
 }
 
 CalcIgnore() {
-	calcignorev="${1}"
+	calcignorev=${1}
 	shift
-	calcignorer="${1}"
-	case "${calcignorer}" in
+	calcignorer=${1}
+	case ${calcignorer} in
 	*' '*)	calcignorer="'(' ${calcignorer} ')'";;
 	esac
 	shift
@@ -501,12 +500,12 @@ CalcIgnore() {
 		calcignorer="${calcignorer}${calcignoreb}-path"
 		calcignorer="${calcignorer} \"\${DIR_CHANGE}${calcignorei}\""
 	done
-	case "${calcignorev}" in
-	'@'*)	calcignorev=${calcignorev#"@"}
+	case ${calcignorev} in
+	'@'*)	calcignorev=${calcignorev#?}
 		[ -n "${calcignoreb}" ] && \
 			calcignorer="'(' ${calcignorer} ')'";;
 	esac
-	eval "${calcignorev}=\"\${calcignorer}\""
+	eval "${calcignorev}=\${calcignorer}"
 }
 
 NeedSquash() {
@@ -537,8 +536,8 @@ NeedSquash() {
 	[ -z "${IGNORETOUCH}" ] && return 0
 	# Do the time-consuming file-comparison only if it appears necessary:
 	(	d="for i
-do	case \"\${i#\"\${DIR_CHANGE}/\"}\" in
-${IGNORETOUCH})	c=\"\${DIR_SQUASH}/\${i##*/}\"
+do	case \${i#\"\${DIR_CHANGE}/\"} in
+${IGNORETOUCH})	c=\${DIR_SQUASH}/\${i##*/}
 	if test -L \"\${i}\"
 	then	test -L \"\${c}\"
 	else	! test -L \"\${c}\"
@@ -566,7 +565,7 @@ ExceedThreshold() {
 }
 
 RemoveThreshold() {
-	case "${IGNORE_THRESHOLD}" in
+	case ${IGNORE_THRESHOLD} in
 	"${DIR_CHANGE}/"*)
 		test -f "${IGNORE_THRESHOLD}" || return 0
 		rm -- "${IGNORE_THRESHOLD}";;
@@ -610,7 +609,7 @@ Store() {
 
 IsUmounted() {
 	if [ -z "${mountinfo}" ]
-	then	mountinfo="`Which mountinfo`" && [ -n "${mountinfo}" ] \
+	then	mountinfo=`Which mountinfo` && [ -n "${mountinfo}" ] \
 			|| mountinfo=:
 	fi
 	! "${mountinfo}" -q "${1}"

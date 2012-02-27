@@ -38,9 +38,9 @@ fakeroot=''
 [ -z "${fakeroot}" ] && command -v fakeroot-ng >/dev/null 2>&1 && fakeroot='fakeroot-ng'
 
 while [ ${#} -gt 0 ]
-do	opt="${1#-}"
-	opt="${opt#-}"
-	case "${opt#dist-}" in
+do	opt=${1#-}
+	opt=${opt#-}
+	case ${opt#dist-} in
 	x*|X*)
 		dist='dist-xz';;
 	l*|L*)

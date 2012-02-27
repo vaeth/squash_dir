@@ -10,10 +10,10 @@ Title() {
 }
 
 Exit() {
-	a="${1:-$?}"
+	a=${1:-${?}}
 	${have_set_title} && if [ ${a} -eq 0 ]
-	then Title "finish"
-	else Title "failure"
+	then Title 'finish'
+	else Title 'failure'
 	fi
 	exit ${a}
 }
@@ -23,7 +23,7 @@ Echo() {
 }
 
 Error() {
-	printf '%s: %s\n' "${0##*/}" "${*}" >&2
+	Echo "${0##*/}: ${*}" >&2
 }
 
 Die() {
@@ -74,7 +74,7 @@ statusline=:
 alpha_order=false
 OPTIND=1
 while getopts 'sSnNfFkKeEHaAh?' opt
-do	case "${opt}" in
+do	case ${opt} in
 	s) save_force=:;;
 	S) save_force=false;;
 	n) keep_force=:;;
@@ -93,7 +93,7 @@ do	case "${opt}" in
 done
 shift $(( ${OPTIND} - 1 ))
 
-${statusline} && case "${TERM}" in
+${statusline} && case ${TERM} in
 screen*)
 	softstatus=:
 ;;
@@ -110,7 +110,7 @@ PrintInit() {
 }
 
 PrintComment() {
-	printf '# %s\n' "${*}"
+	Echo "# ${*}"
 }
 
 PrintAction() {
@@ -123,16 +123,17 @@ PrintAction() {
 PrintNoSave() {
 	PrintAction 'stop'
 	${1} || need_result=`"${2}" -q need_squash 2>&1`
-	case "${need_result}" in
+	case ${need_result} in
 	0)	PrintComment 'is unmodified';;
-	1)	nosave=:; PrintComment 'will not re-squash changes';;
+	1)	nosave=:
+		PrintComment 'will not re-squash changes';;
 	*)	PrintComment "error: ${a}";;
 	esac
 }
 
 StatusRestart() {
 	statusres=`"${1}" -q have_kill 2>&1`
-	case "${statusres}" in
+	case ${statusres} in
 	0)	PrintAction 'restart' 'changes will be re-squashed';;
 	1)	PrintAction 'restart' 'changes will be deleted';;
 	*)	Error "error: ${statusres}"; return 1;;
@@ -147,7 +148,7 @@ Status() {
 		return 0
 	fi
 	statusres=`"${1}" -q will_squash 2>&1`
-	case "${statusres}" in
+	case ${statusres} in
 	0)	PrintNoSave false "${1}";;
 	1)	StatusRestart "${1}" || return 1;;
 	*)	Error "error: ${statusres}"; return 1;;
@@ -181,7 +182,7 @@ RemoveTemp() {
 GetDirChange() {
 	[ -n "${dirchange}" ] && return
 	dirchange=`"${1}" print_dir_change 2>&1` \
-	&& ! case "${dirchange}" in */) false;; esac \
+	&& ! case ${dirchange} in */) false;; esac \
 	|| {
 		Error "error: ${1} print_dir_change: ${dirchange}"
 		dirchange=''
@@ -192,7 +193,7 @@ GetDirChange() {
 create_trap=:
 CreateFile() {
 	test -e "${2}" && return
-	eval "${1}=\"\${2}\""
+	eval "${1}=\${2}"
 	if ${create_trap}
 	then	trap RemoveTemp EXIT HUP INT TERM
 		create_trap=false
@@ -225,7 +226,7 @@ CheckStop() {
 		return
 	fi
 	checkstopres=`"${1}" -q will_squash 2>&1`
-	case "${checkstopres}" in
+	case ${checkstopres} in
 	0)	:;;
 	1)	${keep_force} || return 0
 		CreateNosave "${1}"
@@ -242,7 +243,7 @@ CheckStop() {
 	fi
 	checked_need=:
 	need_result=`"${1}" -q need_squash 2>&1`
-	case "${need_result}" in
+	case ${need_result} in
 	0)	will_restart=false
 		return 0;;
 	1)	CreateDosave "${1}"
@@ -253,14 +254,14 @@ CheckStop() {
 }
 
 Stop() {
-	stoparg="${1}"
+	stoparg=${1}
 	shift
 	if ! "${1}" -q status
 	then	Echo "${1} is not running"
 		return
 	fi
-	filetext="${1#*squash_}"
-	case "${stoparg}" in
+	filetext=${1#*squash_}
+	case ${stoparg} in
 	rest*)	CheckStop "${1}" || return
 		if ${will_restart}
 		then	Title "restart ${filetext}"
@@ -289,14 +290,14 @@ Start() {
 	then	Echo "${1} was already started"
 		return 0
 	fi
-	filetext="${1#*squash_}"
+	filetext=${1#*squash_}
 	Title "start ${filetext}"
 	Echo "Starting ${filetext}..."
 	"${1}" start
 }
 
 Matchingji() {
-	case "${j#*_}" in
+	case ${j#*_} in
 	${i})	test -L "${j}" && test -x "${j}" && return;;
 	esac
 	return 1
@@ -304,7 +305,7 @@ Matchingji() {
 
 PushArray() {
 	eval "pa__=\${${1}__:-0}"
-	eval "${1}__${pa__}=\"\${2}\"
+	eval "${1}__${pa__}=\${2}
 	${1}__="'$(( ${pa__} + 1 ))'
 }
 
@@ -318,14 +319,14 @@ InArray() {
 }
 
 GetArray() {
-	eval "${1}=\"\${${2}__${3}}\""
+	eval "${1}=\${${2}__${3}}"
 }
 
 Doall() {
 	stat=0
 	nosave=false
-	case "${1}" in
-	-*)	a="${1#-}"
+	case ${1} in
+	-*)	a=${1#-}
 		shift;;
 	*)	a='';;
 	esac
@@ -373,10 +374,10 @@ Doall() {
 	Exit ${stat}
 }
 
-opt="${1}"
+opt=${1}
 [ ${#} -eq 0 ] || shift
 [ ${#} -ne 0 ] || set -- '*'
-case "${opt}" in
+case ${opt} in
 stat*|sh*|l*|p*|i*)
 	Doall Status "${@}";;
 re*)	Doall -restart Stop "${@}";;
