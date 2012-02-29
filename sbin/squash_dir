@@ -3,7 +3,7 @@
 
 have_set_title=false
 Title() {
-	! ${statusline} || return
+	${statusline} || return 0
 	! ${softstatus} || printf '\033k%s: %s\\' "${0##*/}" "${*}"
 	printf '\033]0;%s: %s\007' "${0##*/}" "${*}"
 	have_set_title=:

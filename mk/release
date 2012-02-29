@@ -77,7 +77,7 @@ Echo 'Usage of this script requires that you committed the latest changes'
 if KeyCheck "Are you sure you want to tag release-${ver} of ${proj}"
 then	Eecho "git tag -a release-${ver} -m ..."
 	git tag -a "release-${ver}" \
-		-m "Tagging the ${ver} release of the ${proj} project" || \
+		-m "Tagging the ${ver} release" || \
 		KeyCheck "git tagging failed. Continue anyway" || exit 2
 fi
 
