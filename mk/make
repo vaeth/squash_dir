@@ -47,7 +47,7 @@ then	( eval '[ "$(( 0 + 1 ))" = 1 ]' ) >/dev/null 2>&1 && \
 	eval 'shift "$(( ${OPTIND} - 1 ))"' || shift "`expr ${OPTIND} - 1`"
 fi
 
-${quiet} && quietredirect='>/dev/null 2>&1' || quietredirect=''
+${quiet} && quietredirect='>/dev/null 2>&1' || quietredirect=
 
 if ${use_chown}
 then	ls /root >/dev/null 2>&1 && \
@@ -58,10 +58,10 @@ fi
 if ! test -e Makefile
 then	if ! test -e configure || ! test -e Makefile.in
 	then	Info "Running autotools..."
-		eval ./autogen.sh ${quietredirect} || Die "autogen failed"
+		eval "./autogen.sh ${quietredirect}" || Die "autogen failed"
 	fi
 	Info "Running configure" ${configure_extra}
-	eval ./configure ${configure_extra} ${quietredirect} || \
+	eval "./configure ${configure_extra} ${quietredirect}" || \
 		Die "configure failed"
 fi
 ${earlystop} && exit

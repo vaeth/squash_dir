@@ -46,9 +46,9 @@ Mkdir() {
 Normalize() {
 	normalizestat=0
 	for normalizei
-	do	eval "normalizen=\${${normalizei}}"
+	do	eval normalizen=\${${normalizei}}
 		if [ -z "${normalizen}" ]
-		then	eval "${normalizei}=''"
+		then	eval ${normalizei}=
 			normalizestat=1
 			continue
 		fi
@@ -64,21 +64,21 @@ Normalize() {
 		do	normalizen="${normalizen%%//*}/${normalizen#*//}"
 		done
 		[ "${normalizen}" != '/' ] && normalizen=${normalizen%/}
-		eval "${normalizei}=\${normalizen}"
+		eval ${normalizei}=\${normalizen}
 	done
 	return ${normalizestat}
 }
 
 Mktemp() {
 	mktempstat=0
-	eval "mktempn=\${${1}}"
+	eval mktempn=\${${1}}
 	Mkdir "${mktempn%/*}" || mktempstat=${?}
 	if [ ${mktempstat} -eq 0 ]
 	then	mktempn=`mktemp ${2} -- "${mktempn}"` || \
 			Error ${?} "mktemp ${2} ${mktempn} failed"
 		mktempstat=${?}
 		[ -n "${2}" ] && chmod 755 -- "${mktempn}"
-		eval "${1}=\${mktempn}"
+		eval ${1}=\${mktempn}
 	fi
 	Normalize ${1} && return ${mktempstat}
 }
@@ -91,7 +91,7 @@ Mktempdir() {
 	fi
 	Mktemp ${2} -d
 	mktempdirtstat=${?}
-	eval "mktempdirv=\${${2}}"
+	eval mktempdirv=\${${2}}
 	mktempdirv=${mktempdirv%/}
 	case ${mktempdirv} in
 	/*)	:;;
@@ -193,7 +193,7 @@ readtempsk=\${readtempsc##*\"
 			eend 1 "broken ${readtempsi}_name in ${NAME_FILE}"
 			return;;
 		esac
-		eval "${readtempsi}=\${readtempsj%/*}/\${readtempsk}"
+		eval ${readtempsi}=\${readtempsj%/*}/\${readtempsk}
 	done
 }
 
@@ -242,7 +242,7 @@ CreateFirstTime() {
 }
 
 Check() {
-	readlink=`Which readlink` || readlink=''
+	readlink=`Which readlink` || readlink=
 	[ -n "${DIRECTORY}" ] && : ${FILE_SQFS:=${DIRECTORY}.sqfs}
 	for checki in "${DIRECTORY}" "${DIR_CHANGE}" "${DIR_SQUASH}" \
 		"${TMPDIR}" "${FILE_SQFS}" "${FILE_SQFS_OLD}" \
@@ -326,7 +326,7 @@ UnionfsFuse() {
 	if [ -z "${UNIONFS_FUSE_HIDE+set}" ]
 	then	if unionfs --help 2>&1 | grep -q hide_meta_files
 		then	UNIONFS_FUSE_HIDE='-o hide_meta_files'
-		else	UNIONFS_FUSE_HIDE=''
+		else	UNIONFS_FUSE_HIDE=
 		fi
 	fi
 	eval "\"\${unionfsfuse}\" \
@@ -385,7 +385,7 @@ MountRO() {
 }
 
 Mksquash() {
-	mount_squash=''
+	mount_squash=
 	if [ -z "${DIR_SQUASH}" ]
 	then	Mkdir "${DIRECTORY}" && mount_squash=${DIRECTORY}
 	else	Mktempdir ${DIR_SQUASH_temp} DIR_SQUASH DIR_SQUASH_name && \
@@ -465,7 +465,7 @@ Sqfsd() {
 	sqfsdredir='>/dev/null'
 	case ${VERBOSE_MODE} in
 	0)	sqfsdaddopt="${sqfsdaddopt} -no-progress";;
-	2)	sqfsdredir='';;
+	2)	sqfsdredir=;;
 	esac
 	[ -n "${COMPRESSION}" ] && \
 		sqfsdaddopt="${sqfsdaddopt} "'-comp "${COMPRESSION}"'
@@ -493,7 +493,7 @@ CalcIgnore() {
 	*' '*)	calcignorer="'(' ${calcignorer} ')'";;
 	esac
 	shift
-	calcignoreb=''
+	calcignoreb=
 	for calcignorei
 	do	[ -n "${calcignorer}" ] && calcignoreb=' -o '
 		[ -n "${calcignorei}" ] && calcignorei="/${calcignorei}"
@@ -505,7 +505,7 @@ CalcIgnore() {
 		[ -n "${calcignoreb}" ] && \
 			calcignorer="'(' ${calcignorer} ')'";;
 	esac
-	eval "${calcignorev}=\${calcignorer}"
+	eval ${calcignorev}=\${calcignorer}
 }
 
 NeedSquash() {

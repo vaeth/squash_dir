@@ -1,5 +1,17 @@
 # ChangeLog for squash_dir
 
+*squash_dir-11.7
+	Martin Väth <martin at mvath.de>:
+	- Simplify quoting
+
+*squash_dir-11.6
+	Martin Väth <martin at mvath.de>:
+	- Fix statusline logic
+
+*squash_dir-11.5
+	Martin Väth <martin at mvath.de>:
+	- Simplify quoting
+
 *squash_dir-11.4
 	Martin Väth <martin at mvath.de>:
 	- Support also soft status line (screen). Change status line option.

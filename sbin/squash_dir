@@ -157,24 +157,24 @@ Status() {
 }
 
 NoTemp() {
-	dosave_file=''
-	nosave_file=''
-	kill_file=''
+	dosave_file=
+	nosave_file=
+	kill_file=
 }
 
 RemoveTemp() {
 	trap : EXIT HUP INT TERM
 	if [ -n "${dosave_file}" ]
 	then	test -f "${dosave_file}" && rm -- "${dosave_file}"
-		dosave_file=''
+		dosave_file=
 	fi
 	if [ -n "${nosave_file}" ]
 	then	test -f "${nosave_file}" && rm -- "${nosave_file}"
-		nosave_file=''
+		nosave_file=
 	fi
 	if [ -n "${kill_file}" ]
 	then	test -f "${kill_file}" && rm -- "${kill_file}"
-		kill_file=''
+		kill_file=
 	fi
 	trap - EXIT HUP INT TERM
 }
@@ -185,7 +185,7 @@ GetDirChange() {
 	&& ! case ${dirchange} in */) false;; esac \
 	|| {
 		Error "error: ${1} print_dir_change: ${dirchange}"
-		dirchange=''
+		dirchange=
 		return 1
 	}
 }
@@ -193,7 +193,7 @@ GetDirChange() {
 create_trap=:
 CreateFile() {
 	test -e "${2}" && return
-	eval "${1}=\${2}"
+	eval ${1}=\${2}
 	if ${create_trap}
 	then	trap RemoveTemp EXIT HUP INT TERM
 		create_trap=false
@@ -217,7 +217,7 @@ CreateKillfile() {
 }
 
 CheckStop() {
-	dirchange=''
+	dirchange=
 	NoTemp
 	checked_need=false
 	will_restart=:
@@ -304,7 +304,7 @@ Matchingji() {
 }
 
 PushArray() {
-	eval "pa__=\${${1}__:-0}"
+	eval pa__=\${${1}__:-0}
 	eval "${1}__${pa__}=\${2}
 	${1}__="'$(( ${pa__} + 1 ))'
 }
@@ -313,13 +313,13 @@ InArray() {
 	eval "pa__=\${${1}__:-0}
 	"'while [ ${pa__} -gt 0 ]
 	do	pa__=$(( ${pa__} - 1 ))
-		eval "[ \"\${${1}__${pa__}}\" = \"\${2}\" ]" && return
+		eval [ \"\${${1}__${pa__}}\" = \"\${2}\" ] && return
 	done'
 	return 1
 }
 
 GetArray() {
-	eval "${1}=\${${2}__${3}}"
+	eval ${1}=\${${2}__${3}}
 }
 
 Doall() {
@@ -328,7 +328,7 @@ Doall() {
 	case ${1} in
 	-*)	a=${1#-}
 		shift;;
-	*)	a='';;
+	*)	a=;;
 	esac
 	f=${1}
 	shift
