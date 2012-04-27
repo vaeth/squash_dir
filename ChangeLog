@@ -1,5 +1,13 @@
 # ChangeLog for squash_dir
 
+*squash_dir-11.8
+	Martin Väth <martin at mvath.de>:
+	- Default to lazy umount, but print a warning if it is needed
+	- Default locking to "auto" (depending whether /etc/mtab is a symlink)
+	- Default/force noatime where possible
+	- Remove MOUNT_AUFS_OPTS as it is better covered with MOUNT_AUFS
+	- Cosmetical changes
+
 *squash_dir-11.7
 	Martin Väth <martin at mvath.de>:
 	- Simplify quoting

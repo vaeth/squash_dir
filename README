@@ -39,7 +39,7 @@ Moreover, a POSIX shell and "find" are needed with the following extensions
 	(a) The "find" command must know the -path option.
 	(b) A "mktemp" program must be available in the path if you make use
 	    of the temporary file name feature (described later).
-	(c) "flock" unless you disable file locking using LOCKFILE="none".
+	(c) "flock" unless you disable file locking (see LOCKFILE below).
 Some standard tools like /bin/false are also assumed (if /bin/false is missing,
 it is also ok, but it must not do something else than return nonzero status).
 In case unionfs-fuse is tried, you need to have some grep in the path
@@ -609,23 +609,16 @@ VERBOSE_MODE
 
 MOUNT_AUFS
 	These are additional options used for the mount-command for aufs.
-	In earlier versions of squashfs, the default was -i, because
-	/sbin/mount.aufs had used predictable temporary names.
-	However, in current versions of aufs*[-util], the implementation seems
-	to be safe so that the default -i was removed.
-	Use -i only when you deal with very old versions of aufs.
-
-MOUNT_AUFS_OPTS
-	These are additional mount options (used in -o for the mount-command)
-	for aufs. The options are separated by commas.
-	The purpose is that you can e.g. specify "rdblk=0,rdhash=0" here
-	when you have setup aufs for userspace (RDU).
-	"man aufs" (e.g. from sys-fs/aufs*[-util]) provides some details.
+	The default is "-o noatime".
+	You might want to add options like "-o rdblk=0 -o rdhash=0"
+	which help you if you have setup aufs for userspace (RDU),
+	see "man aufs" (e.g. from sys-fs/aufs*[-util]) for details.
 
 MOUNT_UNIONFS_FUSE
 	These are additional mount options used for unionfs-fuse.
-	The default is
-	-o cow -o allow_other -o use_ino -o nonempty ${UNIONFS_FUSE_HIDE}
+	The default is:
+	-o cow -o allow_other -o use_ino -o nonempty
+	-o noatime ${UNIONFS_FUSE_HIDE}
 	So if you modify this variable, you should probably include
 	these options. Omit them only if you know what you are doing.
 
@@ -649,26 +642,28 @@ MOUNT_FUNIONFS
 
 UMOUNT_OPTS
 	These are options which are used for umounting.
-	This defaults to "-i" because /sbin/umount.aufs might call
-	/sbin/auplink which uses predictable temporary names and thus
-	is a security risk.
-	Omit this -i only when you patched /sbin/umount.aufs or
-	/sbin/auplink to behave securely.
+	This defaults to "-i" because /sbin/umount.aufs causes problems
+	in some cases.
 
 LAZY_UMOUNT
-	If this variable is nonempty, then a lazy umount is attempted
+	If this variable is unset or "true", a lazy umount is attempted
 	after a failed umount. This means that the chances are good
 	that this script will successfully stop even if the directory
 	is still in use. However, it might happen that e.g.
 	loop devices are not freed correctly.
-	Only set this variable if you know what you are doing.
 
 LOCKFILE
 	Since mount/umount calls cannot properly be done in parallel
 	(since apparently they do not properly lock /etc/mtab), we use
 	flock for these calls to create a lockfile (which is never
-	erased) to allow rc_parallel="YES". This variable contains
-	the path of this lock file; if unset, /etc/mtab.lock is used.
-	It is dangerous to use a user-writable directory here
-	(like e.g. /tmp). No locking is done if this variable is
-	nonempty and does not start with "/".
+	erased) to allow rc_parallel="YES". You can set this variable to
+	the following values:
+	1) To a path of the lockfile. The path must be absolute, i.e.
+	   starting with "/". It is dangerous to use a user-writable
+	   directory here (like e.g. /tmp).
+	2) To the magic value "auto" (or if you do not set this variable):
+	   In this case the lockfile /etc/mtab.lock is used unless
+	   /etc/mtab is a symbolic link. In the latter case the lockfile
+	   feature is switched off.
+	3) In all other cases (e.g. if you set LOCKFILE="" or LOCKFILE="no")
+	   the lockfile feature is switched off.

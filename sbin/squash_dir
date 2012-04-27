@@ -95,14 +95,11 @@ shift $(( ${OPTIND} - 1 ))
 
 ${statusline} && case ${TERM} in
 screen*)
-	softstatus=:
-;;
+	softstatus=:;;
 xterm*|rxvt*|aterm*|konsole*|gnome*|Eterm*|kterm*|interix*)
-	softstatus=false
-;;
+	softstatus=false;;
 *)
-	statusline=false
-;;
+	statusline=false;;
 esac
 
 PrintInit() {
@@ -182,8 +179,9 @@ RemoveTemp() {
 GetDirChange() {
 	[ -n "${dirchange}" ] && return
 	dirchange=`"${1}" print_dir_change 2>&1` \
-	&& ! case ${dirchange} in */) false;; esac \
-	|| {
+	&& ! case ${dirchange} in
+	*/)	false;;
+	esac || {
 		Error "error: ${1} print_dir_change: ${dirchange}"
 		dirchange=
 		return 1
@@ -227,11 +225,15 @@ CheckStop() {
 	fi
 	checkstopres=`"${1}" -q will_squash 2>&1`
 	case ${checkstopres} in
-	0)	:;;
-	1)	${keep_force} || return 0
+	0)
+		:;;
+	1)
+		${keep_force} || return 0
 		CreateNosave "${1}"
 		return;;
-	*)	Error "${1} error: ${checkstopres}"; return 1;;
+	*)
+		Error "${1} error: ${checkstopres}"
+		return 1;;
 	esac
 	if ! ${save_force}
 	then	will_restart=${force}
@@ -244,11 +246,14 @@ CheckStop() {
 	checked_need=:
 	need_result=`"${1}" -q need_squash 2>&1`
 	case ${need_result} in
-	0)	will_restart=false
+	0)
+		will_restart=false
 		return 0;;
-	1)	CreateDosave "${1}"
+	1)
+		CreateDosave "${1}"
 		return;;
-	*)	Error "${1} error: ${checkstopres}"
+	*)
+		Error "${1} error: ${checkstopres}"
 		return 1;;
 	esac
 }
@@ -262,26 +267,26 @@ Stop() {
 	fi
 	filetext=${1#*squash_}
 	case ${stoparg} in
-	rest*)	CheckStop "${1}" || return
+	rest*)
+		CheckStop "${1}" || return
 		if ${will_restart}
 		then	Title "restart ${filetext}"
 			Echo "Restarting ${filetext}..."
 			"${1}" restart && RemoveTemp
 		else	PrintInit "${1}"
 			PrintNoSave ${checked_need} "${1}"
-		fi
-	;;
-	stop)	CheckStop "${1}" || return
+		fi;;
+	stop)
+		CheckStop "${1}" || return
 		Title "stop ${filetext}"
 		Echo "Stopping ${filetext}"
 		"${1}" stop
 		stopret=${?}
-		RemoveTemp && return ${stopret}
-	;;
-	zap)	Title "zap ${filetext}"
+		RemoveTemp && return ${stopret};;
+	zap)
+		Title "zap ${filetext}"
 		Echo "Zapping ${filetext}"
-		"${1}" zap
-	;;
+		"${1}" zap;;
 	esac
 }
 
@@ -298,7 +303,8 @@ Start() {
 
 Matchingji() {
 	case ${j#*_} in
-	${i})	test -L "${j}" && test -x "${j}" && return;;
+	${i})
+		test -L "${j}" && test -x "${j}" && return;;
 	esac
 	return 1
 }
@@ -326,9 +332,11 @@ Doall() {
 	stat=0
 	nosave=false
 	case ${1} in
-	-*)	a=${1#-}
+	-*)
+		a=${1#-}
 		shift;;
-	*)	a=;;
+	*)
+		a=;;
 	esac
 	f=${1}
 	shift
@@ -378,12 +386,17 @@ opt=${1}
 [ ${#} -eq 0 ] || shift
 [ ${#} -ne 0 ] || set -- '*'
 case ${opt} in
-stat*|sh*|l*|p*|i*)
+stat*|sh*|[lpi]*)
 	Doall Status "${@}";;
-re*)	Doall -restart Stop "${@}";;
-sto*)	Doall -stop Stop "${@}";;
-z*)	Doall -zap Stop "${@}";;
-star*)	Doall Start "${@}";;
-*)	Usage;;
+re*)
+	Doall -restart Stop "${@}";;
+sto*)
+	Doall -stop Stop "${@}";;
+z*)
+	Doall -zap Stop "${@}";;
+star*)
+	Doall Start "${@}";;
+*)
+	Usage;;
 esac
 Exit

@@ -8,7 +8,7 @@ depend() {
 description='Mount a squashed directory in a writable manner'
 
 extra_commands='will_squash need_squash have_magic have_kill'
-extra_started_commands="print_dir_change print_dir_squash"
+extra_started_commands='print_dir_change print_dir_squash'
 
 description_will_squash='print 1 to stderr if stop operation would re-squash'
 description_need_squash='print 1 to stderr if new data was written'
@@ -22,7 +22,7 @@ Which() {
 }
 
 Warn() {
-	[ ${1} -eq 0 ] && return 0
+	[ ${1} -eq 0 ] && return
 	warnstat=${1}
 	shift
 	ewarn "${*} [exit with ${warnstat}]"
@@ -30,7 +30,7 @@ Warn() {
 }
 
 Error() {
-	[ ${1} -eq 0 ] && return 0
+	[ ${1} -eq 0 ] && return
 	errorstat=${1}
 	shift
 	eerror "${*} [exit with ${errorstat}]"
@@ -111,20 +111,29 @@ Mktempdir() {
 }
 
 Lock() {
-	if [ "${LOCKFILE}" = '/' ]
-	then	"${@}"
+	case ${LOCKFILE-auto} in
+	auto)	if test -h /etc/mtab
+		then	LOCKFILE=
+		else	LOCKFILE='/etc/mtab.lock'
+			false
+		fi;;
+	/*)	false;;
+	esac && {
+		"${@}"
 		return
-	fi
+	}
 	flock -w 20 -- "${LOCKFILE}" "${@}"
 }
 
 Umount() {
 	Lock umount "${UMOUNT_OPTS}" "${@}" >/dev/null && return
 	umountstat=${?}
-	if [ -n "${LAZY_UMOUNT}" ]
-	then	Lock umount -l "${UMOUNT_OPTS}" "${@}" >/dev/null && return
-		umountstat=${?}
-	fi
+	case ${LAZY_UMOUNT-y} in
+	[yYtT:1]*)
+		Warn ${umountstat} "Non-lazy umount ${*} failed"
+		Lock umount -l "${UMOUNT_OPTS}" "${@}" >/dev/null && return
+		umountstat=${?};;
+	esac
 	Error ${umountstat} "umount ${*} failed"
 }
 
@@ -293,25 +302,19 @@ Check() {
 			return
 		fi
 	fi
-	case ${LOCKFILE} in
-	''|/*)	: ${LOCKFILE:=/etc/mtab.lock};;
-	*)	LOCKFILE='/';; # Do not use the lockfile feature.
-	esac
 	: ${UMOUNT_OPTS=-i}
 	: ${COMPRESSION=xz}
 }
 
 Aufs() {
-	mount_aufs_opt="br:${DIR_CHANGE}=rw:${mount_squash}=rr"
-	[ -z "${MOUNT_AUFS_OPTS%,}" ] || \
-		mount_aufs_opt="${mount_aufs_opt},${MOUNT_AUFS_OPTS%,}"
-	eval "Mount ${MOUNT_AUFS} -t aufs -o \"\${mount_aufs_opt}\" \
+	eval "Mount -t aufs ${MOUNT_AUFS--o noatime} \
+		-o \"br:\${DIR_CHANGE}=rw:\${mount_squash}=rr\" \
 		-- aufs \"\${DIRECTORY}\"" \
 	|| Warn ${?} "Failed mounting ${DIR_CHANGE} with aufs"
 }
 
 Unionfs() {
-	eval "Mount ${MOUNT_UNIONFS} -t unionfs \
+	eval "Mount -t unionfs ${MOUNT_UNIONFS--o noatime} \
 		-o \"dirs=\${DIR_CHANGE}=rw:\${mount_squash}=ro\" \
 		-- unionfs \"\${DIRECTORY}\"" \
 	|| Warn ${?} "Failed mounting ${DIR_CHANGE} with unionfs"
@@ -330,7 +333,7 @@ UnionfsFuse() {
 		fi
 	fi
 	eval "\"\${unionfsfuse}\" \
-	${MOUNT_UNIONFS_FUSE--o cow -o allow_other -o use_ino -o nonempty $UNIONFS_FUSE_HIDE} \
+	${MOUNT_UNIONFS_FUSE--o cow -o allow_other -o use_ino -o nonempty -o noatime $UNIONFS_FUSE_HIDE} \
 		\"\${DIR_CHANGE}=RW:\${mount_squash}=RO\" \
 		\"\${DIRECTORY}\"" || \
 	Warn ${?} "Failed mounting ${DIR_CHANGE} with unionfs-fuse"
@@ -352,18 +355,18 @@ Mountunion() {
 	for mountunion in ${ORDER-aufs unionfs-fuse unionfs funionfs}
 	do	case ${mountunion} in
 		aufs)
-			Aufs && return 0;;
+			Aufs && return;;
 		unionfs)
-			Unionfs && return 0;;
+			Unionfs && return;;
 		unionfs*)
-			UnionfsFuse && return 0;;
+			UnionfsFuse && return;;
 		funionfs)
-			Funionfs && return 0;;
+			Funionfs && return;;
 		*)
 			ewarn "Strange entry in ORDER: ${mountunion}";;
 		esac
 	done
-	false
+	return 1
 }
 
 MountRW() {
@@ -397,7 +400,7 @@ start() {
 	Check start || return
 	Mksquash || return
 	ebegin "Mounting ${FILE_SQFS} as ${DIRECTORY}"
-	if Mount -t squashfs -o loop,ro -- "${FILE_SQFS}" "${mount_squash}"
+	if Mount -t squashfs -o loop,ro,noatime -- "${FILE_SQFS}" "${mount_squash}"
 	then	if [ -n "${DIR_CHANGE}" ]
 		then	MountRW
 			startstat=${?}
@@ -428,10 +431,12 @@ MvSqfsOld() {
 
 Rmdir() {
 	case ${1:-0} in
-	0|n*|N*|f*|F*)
+	[0nNfF]*)
 		return 0;;
-	*p*)	rmdirparent=:;;
-	*)	rmdirparent=false;;
+	*p*)
+		rmdirparent=:;;
+	*)
+		rmdirparent=false;;
 	esac
 	[ -z "${2}" ] || ! test -d "${2}" && return
 	rmdir -- "${2}" || {
@@ -444,13 +449,13 @@ Rmdir() {
 
 # Usage: ClearRw [keep] [action-before-first-removal]
 ClearRw() {
-	[ -z "${DIR_CHANGE}" ] || ! test -d "${DIR_CHANGE}" && return 0
+	[ -z "${DIR_CHANGE}" ] || ! test -d "${DIR_CHANGE}" && return
 	Cleardir "${DIR_CHANGE}" "${@}" || return
 	Rmdir "${RM_DIR_CHANGE}" "${DIR_CHANGE}"
 }
 
 Tbzd() {
-	[ -z "${FILE_TBZ}" ] && return 0
+	[ -z "${FILE_TBZ}" ] && return
 	MvTbzOld
 	Error ${?} "Failed moving ${FILE_SQFS} -> ${FILE_SQFS_OLD}"
 	${TARCMD:-tar -cjf} "${FILE_TBZ}" "${DIRECTORY}/" >/dev/null
@@ -509,8 +514,8 @@ CalcIgnore() {
 }
 
 NeedSquash() {
-	[ -n "${DIR_CHANGE}" ] && test -d "${DIR_CHANGE}" || return 1
-	[ -n "${DIRECTORY}" ] && test -d "${DIRECTORY}" || return 1
+	[ -n "${DIR_CHANGE}" ] && test -d "${DIR_CHANGE}" || return
+	[ -n "${DIRECTORY}" ] && test -d "${DIRECTORY}" || return
 	eval "CalcIgnore @needsquashif \"\${IGNOREFILE}\" \
 		${IGNORETOPFILE} \
 		\"._funionfs*\" \
@@ -533,7 +538,7 @@ NeedSquash() {
 	}
 	needsquashc="find \"\${DIR_CHANGE}\" ${needsquashc} -o -exec "
 	eval "${needsquashc}/bin/false '{}' '+'" && return 1
-	[ -z "${IGNORETOUCH}" ] && return 0
+	[ -z "${IGNORETOUCH}" ] && return
 	# Do the time-consuming file-comparison only if it appears necessary:
 	(	d="for i
 do	case \${i#\"\${DIR_CHANGE}/\"} in
@@ -559,7 +564,7 @@ ExceedThreshold() {
 	[ ${THRESHOLD} -gt 0 ] || return 0
 	Normalize IGNORE_THRESHOLD || \
 		IGNORE_THRESHOLD="${DIR_CHANGE}/.do-save"
-	test -e "${IGNORE_THRESHOLD}" && return 0
+	test -e "${IGNORE_THRESHOLD}" && return
 	exceedthresholdn=`du -s -k -- "${DIR_CHANGE}" | cut -f 1`
 	[ "${THRESHOLD}" -le "${exceedthresholdn}" ]
 }
@@ -578,7 +583,7 @@ Store() {
 		return 0
 	else	will_kill=false
 	fi
-	HaveMagic && return 0
+	HaveMagic && return
 	ExceedThreshold || return 0
 	if ! NeedSquash
 	then	will_kill=keep
@@ -624,7 +629,7 @@ UmountSquash() {
 }
 
 UmountAll() {
-	ebegin "Unmounting ${DIRECTORY}"
+	ebegin "Umounting ${DIRECTORY}"
 	IsUmounted "${DIRECTORY}" || Umount -- "${DIRECTORY}"
 	umountallstat=${?}
 	if [ -z "${DIR_SQUASH}" ]

@@ -1,6 +1,6 @@
 # (C) Martin V\"ath <martin@mvath.de>
 
-AUTOMAKE_OPTIONS = foreign 1.10 no-dist-gzip dist-bzip2
+AUTOMAKE_OPTIONS = foreign 1.10 no-dist-gzip dist-bzip2 -Wobsolete -Wportability -Wextra-portability
 
 EXTRA_DIST = \
 mk \

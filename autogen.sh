@@ -1,14 +1,20 @@
 #! /usr/bin/env sh
 
-run() {
-	printf '%s\n' ">>> ${*}" >&2
-	if ! "${@}"
-	then	printf '%s\n' "failure" >&2
-		exit 1
-	fi
+Echo() {
+	printf '%s\n' "${*}" >&2
 }
 
-run mkdir -p config
-run aclocal
-run autoconf
-run automake -af --copy
+Die() {
+	Echo "${*}"
+	exit 1
+}
+
+Run() {
+	Echo ">>> ${*}"
+	"${@}" || Die 'failure'
+}
+
+Run mkdir -p config
+Run aclocal
+Run autoconf
+Run automake -a --copy "${@}"

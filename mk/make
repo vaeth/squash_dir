@@ -8,7 +8,7 @@ Echo() {
 }
 
 Info() {
-	Echo '%s\n' "${*}"
+	Echo "${*}"
 }
 
 Usage() {
@@ -58,7 +58,7 @@ fi
 if ! test -e Makefile
 then	if ! test -e configure || ! test -e Makefile.in
 	then	Info "Running autotools..."
-		eval "./autogen.sh ${quietredirect}" || Die "autogen failed"
+		eval "./autogen.sh -Werror ${quietredirect}" || Die "autogen failed"
 	fi
 	Info "Running configure" ${configure_extra}
 	eval "./configure ${configure_extra} ${quietredirect}" || \
