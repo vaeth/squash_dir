@@ -14,7 +14,7 @@ Run() {
 	"${@}" || Die 'failure'
 }
 
-Run mkdir -p config
+Run mkdir -p -m 755 config
 Run aclocal
 Run autoconf
 Run automake -a --copy "${@}"

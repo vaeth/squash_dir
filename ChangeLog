@@ -1,5 +1,9 @@
 # ChangeLog for squash_dir
 
+*squash_dir-11.9
+	Martin Väth <martin at mvath.de>:
+	- More compatible usage of mkdir
+
 *squash_dir-11.8
 	Martin Väth <martin at mvath.de>:
 	- Default to lazy umount, but print a warning if it is needed

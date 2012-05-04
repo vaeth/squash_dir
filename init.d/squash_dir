@@ -40,7 +40,7 @@ Error() {
 Mkdir() {
 	[ -z "${1}" ] && return
 	test -d "${1}" && return
-	mkdir -p -- "${1}" || Error ${?} "cannot create ${1}"
+	mkdir -p -m 755 -- "${1}" || Error ${?} "cannot create ${1}"
 }
 
 Normalize() {
