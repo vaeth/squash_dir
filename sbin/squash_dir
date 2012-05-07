@@ -161,15 +161,15 @@ NoTemp() {
 
 RemoveTemp() {
 	trap : EXIT HUP INT TERM
-	if [ -n "${dosave_file}" ]
+	if [ -n "${dosave_file:++}" ]
 	then	test -f "${dosave_file}" && rm -- "${dosave_file}"
 		dosave_file=
 	fi
-	if [ -n "${nosave_file}" ]
+	if [ -n "${nosave_file:++}" ]
 	then	test -f "${nosave_file}" && rm -- "${nosave_file}"
 		nosave_file=
 	fi
-	if [ -n "${kill_file}" ]
+	if [ -n "${kill_file:++}" ]
 	then	test -f "${kill_file}" && rm -- "${kill_file}"
 		kill_file=
 	fi
@@ -177,7 +177,7 @@ RemoveTemp() {
 }
 
 GetDirChange() {
-	[ -n "${dirchange}" ] && return
+	[ -n "${dirchange:++}" ] && return
 	dirchange=`"${1}" print_dir_change 2>&1` \
 	&& ! case ${dirchange} in
 	*/)	false;;
