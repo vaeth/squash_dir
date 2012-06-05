@@ -3,6 +3,7 @@
 AUTOMAKE_OPTIONS = foreign 1.10 no-dist-gzip dist-bzip2 -Wobsolete -Wportability -Wextra-portability
 
 EXTRA_DIST = \
+.gitignore \
 mk \
 autogen.sh \
 INSTALL \
