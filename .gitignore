@@ -1,10 +1,23 @@
+# autotools directories:
+/tmp*
+/autom4te.cache/
+/config/
+/m4/
 
-config/
-aclocal.m4
-autom4te.cache
-config.log
-config.status
-configure
+# autotools/doxygen files:
+/aclocal.m4
+/config.log
+/config.status
+/configure
+/stamp-h1
 
+# General patterns are last:
 *Makefile
 *Makefile.in
+*Makefile.in.in
+*tags
+*~
+*.tar
+*.tar.?
+*.tar.??
+*.tar.???

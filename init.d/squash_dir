@@ -546,10 +546,10 @@ ${IGNORETOUCH})	c=\${DIR_SQUASH}/\${i##*/}
 	if test -L \"\${i}\"
 	then	test -L \"\${c}\"
 	else	! test -L \"\${c}\"
-	fi || break
+	fi || exit 1
 	test -d \"\${i}\" && test -d \"\${c}\" && continue
 	test -f \"\${i}\" && test -f \"\${c}\" \
-	&& diff -q -- \"\${1}\" \"\${c}\" >/dev/null 2>&1 && continue;;
+	&& diff -q -- \"\${i}\" \"\${c}\" >/dev/null 2>&1 && continue;;
 esac
 exit 1
 done

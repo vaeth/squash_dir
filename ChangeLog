@@ -1,5 +1,13 @@
 # ChangeLog for squash_dir
 
+*squash_dir-11.11
+	Martin Väth <martin at mvath.de>:
+	- Fix bugs in IGNORETOUCH handling
+
+*squash_dir-11.10
+	Martin Väth <martin at mvath.de>:
+	- Speed up -z/-n tests
+
 *squash_dir-11.9
 	Martin Väth <martin at mvath.de>:
 	- More compatible usage of mkdir
