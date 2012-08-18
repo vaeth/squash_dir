@@ -12,8 +12,8 @@ Title() {
 Exit() {
 	a=${1:-${?}}
 	${have_set_title} && if [ ${a} -eq 0 ]
-	then Title 'finish'
-	else Title 'failure'
+	then	Title 'finish'
+	else	Title 'failure'
 	fi
 	exit ${a}
 }
@@ -75,20 +75,20 @@ alpha_order=false
 OPTIND=1
 while getopts 'sSnNfFkKeEHaAh?' opt
 do	case ${opt} in
-	s) save_force=:;;
-	S) save_force=false;;
-	n) keep_force=:;;
-	N) keep_force=false;;
-	f) force=:;;
-	F) force=false;;
-	k) kill_force=:;;
-	K) kill_force=false;;
-	e) error_skip=:;;
-	E) error_skip=false;;
-	H) statusline=false;;
-	a) alpha_order=:;;
-	A) alpha_order=false;;
-	*) Usage 0;;
+	s)	save_force=:;;
+	S)	save_force=false;;
+	n)	keep_force=:;;
+	N)	keep_force=false;;
+	f)	force=:;;
+	F)	force=false;;
+	k)	kill_force=:;;
+	K)	kill_force=false;;
+	e)	error_skip=:;;
+	E)	error_skip=false;;
+	H)	statusline=false;;
+	a)	alpha_order=:;;
+	A)	alpha_order=false;;
+	*)	Usage 0;;
 	esac
 done
 shift $(( ${OPTIND} - 1 ))
@@ -232,7 +232,7 @@ CheckStop() {
 		CreateNosave "${1}"
 		return;;
 	*)
-		Error "${1} error: ${checkstopres}"
+		Error "error in ${1}: ${checkstopres}"
 		return 1;;
 	esac
 	if ! ${save_force}
@@ -253,7 +253,7 @@ CheckStop() {
 		CreateDosave "${1}"
 		return;;
 	*)
-		Error "${1} error: ${checkstopres}"
+		Error "error in ${1}: ${checkstopres}"
 		return 1;;
 	esac
 }

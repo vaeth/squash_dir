@@ -133,7 +133,7 @@ change for some reason using unsquashfs on the created files, you might
 have lost some information permanently like e.g. hard-links within the
 cleaned directories).
 
-If the above step appears to dangerous to you, you can of course also
+If the above step appears too dangerous to you, you can of course also
 create the file manually
 	mksquashfs /usr/portage /usr/portage.sqfs
 	mksquashfs /usr/share/texmf-dist /usr/share/texmf-dist.sqfs
@@ -240,7 +240,7 @@ the directory at least readonly on the expected place, so even in
 this bad situation (which probably only happens if you boot from an
 experimental kernel or a brand new kernel without corresponding support)
 you can still access the directory read-only. Hence, also rather vital
-directories can be compress as long as it is not vital to write to them
+directories can be compressed as long as it is not vital to write to them
 (and as long as the relevant programs for mounting etc. are not contained
 withing these directories, of course).
 
@@ -285,7 +285,7 @@ Variables (Configuration in /etc/conf.d/squash_*)
 
 The subsequent variables can be defined in /etc/conf.d/squash_*
 Three values are mandatory:
-DIRECTORY *must* be defined and usually you will want to specify at least
+DIRECTORY *must* be defined, and usually you will want to specify at least
 DIR_CHANGE and probably also DIR_SQUASH; for the others, default values
 are assumed as described below.
 
