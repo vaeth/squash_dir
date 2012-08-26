@@ -1,10 +1,9 @@
 #! /usr/bin/env sh
 
-export LC_ALL
-LC_ALL=C
+export LC_ALL=C
 
 Echo() {
-	printf '%s\n' "${@}"
+	printf '%s\n' "${*}"
 }
 
 Info() {

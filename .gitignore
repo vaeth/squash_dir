@@ -5,13 +5,26 @@
 /m4/
 
 # autotools/doxygen files:
+/ABOUT-NLS
 /aclocal.m4
+/confdefs.h
+/config.h
 /config.log
 /config.status
 /configure
+/conftest*
+/doxygen.cfg
 /stamp-h1
 
 # General patterns are last:
+!*.in
+!*Makefile.am
+*.dirstamp
+*.exe
+*.o
+*.o-*
+*.o.*
+*.obj
 *Makefile
 *Makefile.in
 *Makefile.in.in

@@ -1,7 +1,6 @@
 #! /usr/bin/env sh
 
-export LC_ALL
-LC_ALL=C
+export LC_ALL=C
 umask 022
 
 Echo() {
@@ -20,4 +19,4 @@ ExecDie() {
 }
 
 ExecDie git add .
-ExecDie git commit -a
+ExecDie git commit -a "${@}"

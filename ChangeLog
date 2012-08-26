@@ -1,5 +1,9 @@
 # ChangeLog for squash_dir
 
+*squash_dir-11.12
+	Martin Väth <martin at mvath.de>:
+	- Support overlayfs (untested). Cosmetical changes
+
 *squash_dir-11.11
 	Martin Väth <martin at mvath.de>:
 	- Fix bugs in IGNORETOUCH handling

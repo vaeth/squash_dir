@@ -313,6 +313,14 @@ Aufs() {
 	|| Warn ${?} "Failed mounting ${DIR_CHANGE} with aufs"
 }
 
+Overlayfs() {
+	eval "Mount -t overlayfs ${MOUNT_OVERLAYFS--o noatime} \
+		-o \"upperdir=\${DIR_CHANGE}\" \
+		-o \"lowerdir=\${mount_squash}\" \
+		-- overlayfs \"\${DIRECTORY}\"" \
+	|| Warn ${?} "Failed mounting ${DIR_CHANGE} with overlayfs"
+}
+
 Unionfs() {
 	eval "Mount -t unionfs ${MOUNT_UNIONFS--o noatime} \
 		-o \"dirs=\${DIR_CHANGE}=rw:\${mount_squash}=ro\" \
@@ -352,10 +360,12 @@ Funionfs() {
 }
 
 Mountunion() {
-	for mountunion in ${ORDER-aufs unionfs-fuse unionfs funionfs}
+	for mountunion in ${ORDER-aufs overlayfs unionfs-fuse unionfs funionfs}
 	do	case ${mountunion} in
 		aufs)
 			Aufs && return;;
+		overlayfs)
+			Overlayfs && return;;
 		unionfs)
 			Unionfs && return;;
 		unionfs*)
@@ -660,14 +670,11 @@ DoKill() {
 	kill_eend=:
 	case ${will_kill} in
 	kill)
-		ClearRw "${KILL_NOT}" 'KillBegin "Killing"'
-	;;
+		ClearRw "${KILL_NOT}" 'KillBegin "Killing"';;
 	keep)
-		ClearRw "${KEEP}"
-	;;
+		ClearRw "${KEEP}";;
 	stored)
-		ClearRw
-	;;
+		ClearRw;;
 	esac
 	kill_stat=${?}
 	Error ${kill_stat} "Clearing ${DIR_CHANGE} failed"

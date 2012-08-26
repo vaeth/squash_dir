@@ -9,10 +9,12 @@ This is essentially an initscript for Gentoo or openrc which allows to keep a
 directory compressed by squashfs but simultaneously allows to write on it
 using some of (depending on the configuration and what is available):
 
-	aufs* (see http://aufs.sourceforge.net)
-	unionfs-fuse (http://podgorny.cz/moin/UnionFsFuse)
-	unionfs (see http://www.fsl.cs.sunysb.edu/project-unionfs.html)
-	funionfs (http://bugs.gentoo.org/show_bug.cgi?id=151673)
+	aufs, see http://aufs.sourceforge.net
+	overlayfs, see
+		http://git.kernel.org/?p=linux/kernel/git/mszeredi/vfs.git
+	unionfs-fuse, see http://podgorny.cz/moin/UnionFsFuse
+	unionfs, see http://www.fsl.cs.sunysb.edu/project-unionfs.html
+	funionfs, see http://bugs.gentoo.org/show_bug.cgi?id=151673
 
 The idea is that on shutdown the data is recompressed
 (and the temporary modified data removed).
@@ -93,7 +95,7 @@ Moreover, later, there will be auxiliary directories ${DIRECTORY}.changes
 and ${DIRECTORIES}.readonly available. The latter is the content of
 the compressed data without any modifications (this directory is readonly),
 and the former contains the modified files (and some metadata, depending
-on which of aufs|unionfs-fuse|unionfs|funionfs you are using).
+on which of aufs|overlayfs|unionfs-fuse|unionfs|funionfs you are using).
 The THRESHOLD value means that your changes will not be compressed on every
 shutdown but only if ${DIRECTORY}.changes gets large enough.
 Moreover, the IGNORETOUCH-value in squash_tex means that changes only in
@@ -212,7 +214,7 @@ A Word of None-Warning
 
 It is in general rather safe to squash a directory, even a rather vital one:
 Even if e.g. you boot from a kernel which has no support for some of
-aufs|unionfs-fuse|unionfs|funionfs to make the directory writable,
+aufs|overlayfs|unionfs-fuse|unionfs|funionfs to make the directory writable,
 the script will mount it at least as read-only (using "mount --bind" if
 necessary). Moreover, if everything goes wrong you can still use "unsquashfs"
 to unpack the directory manually.
@@ -224,10 +226,8 @@ which are perhaps not supported by the used tools.
 Modules and Mounting
 ====================
 
-If you compiled squashfs, aufs, or fuse as modules, you should modprobe
-these modules first (or even better put them into /etc/conf.d/modules
-when you use openrc or, when you use the old baselayout-1,
-put them into /etc/modules.autoload.d/foo).
+If you compiled squashfs, aufs, overlayfs, or fuse as modules, you should
+modprobe these modules first (or better put them into /etc/conf.d/modules).
 squash_dir will make no attempt to load the modules (unless this happens
 automatically by the corresponding mount program): The script will just
 attempt to mount the directories using the corresponding tool and
@@ -359,7 +359,7 @@ DIR_SQUASH
 	DIRECTORY writable). This directory will contain a read-only
 	version of the contents of FILE_SQFS.
 	In case things go wrong when making DIRECTORY writable (e.g.
-	if aufs/unionfs-fuse/unionfs/funionfs all fail due to missing
+	if aufs/overlayfs/unionfs-fuse/unionfs/funionfs all fail due to missing
 	upport by zhe kernel) you can still access DIR_SQUASH; you can
 	also use this directory to compare the content of currently changed
 	files with their "original" stored in the most current
@@ -537,7 +537,7 @@ ORDER
 	If the variable DIR_CHANGE is empty, this variable is ignored.
 	Otherwise, its value should be a string consisting of
 	all (or some) of the words
-		aufs unionfs-fuse unionfs funionfs   (*)
+		aufs overlayfs unionfs-fuse unionfs funionfs   (*)
 	Then the corresponding tool is used to make DIRECTORY writable.
 	The tools are attempted in the given order: If the first tool
 	fails, a warning message is printed, and the next tool is
@@ -613,6 +613,10 @@ MOUNT_AUFS
 	You might want to add options like "-o rdblk=0 -o rdhash=0"
 	which help you if you have setup aufs for userspace (RDU),
 	see "man aufs" (e.g. from sys-fs/aufs*[-util]) for details.
+
+MOUNT_OVERLAYFS
+	These are additional options used for the mount-command for overlayfs.
+	The default is "-o noatime".
 
 MOUNT_UNIONFS_FUSE
 	These are additional mount options used for unionfs-fuse.
