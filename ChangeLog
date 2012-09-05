@@ -1,5 +1,9 @@
 # ChangeLog for squash_dir
 
+*squash_dir-11.13
+	Martin Väth <martin at mvath.de>:
+	- Rely on title script for status line support
+
 *squash_dir-11.12
 	Martin Väth <martin at mvath.de>:
 	- Support overlayfs (untested). Cosmetical changes

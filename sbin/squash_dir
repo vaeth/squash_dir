@@ -1,23 +1,6 @@
 #! /usr/bin/env sh
 # (C) Martin V\"ath <martin@mvath.de>
 
-have_set_title=false
-Title() {
-	${statusline} || return 0
-	! ${softstatus} || printf '\033k%s: %s\\' "${0##*/}" "${*}"
-	printf '\033]0;%s: %s\007' "${0##*/}" "${*}"
-	have_set_title=:
-}
-
-Exit() {
-	a=${1:-${?}}
-	${have_set_title} && if [ ${a} -eq 0 ]
-	then	Title 'finish'
-	else	Title 'failure'
-	fi
-	exit ${a}
-}
-
 Echo() {
 	printf '%s\n' "${*}"
 }
@@ -26,11 +9,40 @@ Error() {
 	Echo "${0##*/}: ${*}" >&2
 }
 
+Exit() {
+	exit ${1}
+}
+
+Title() {
+Title() {
+:
+}
+	case ${titleopt} in
+	*-*)	return;;
+	esac
+	command -v title >/dev/null 2>&1 || return 0
+TitleVerbose() {
+:
+}
+Exit() {
+	exitstatus=${1:-${?}}
+	TitleVerbose
+	exit ${exitstatus}
+}
+TitleInit() {
+. title "${@}"
+}
+	TitleInit ${titleopt:+"-${titleopt}"} -- "${@}"
+}
+
+TitleInfo() {
+	Title "${0##*/}: ${*}"
+}
+
 Die() {
 	Error "${*}"
 	Exit 1
 }
-
 
 Usage() {
 	Echo "Usage: ${0##*/} [option] status|restart|stop|start|zap [masks]
@@ -58,6 +70,7 @@ Options:
   -N  Cancel previous -n
   -F  Cancel previous -f
   -K  Cancel previous -k
+  -T[fHsS-] pass option(s) to the title script; - means no title
 Alias/shortcuts:
 Instead of \"status\" you can also say \"show\", \"print\", \"info\", \"list\".
 All these can be abbreviated by their first letters until unique,
@@ -70,10 +83,10 @@ error_skip=:
 save_force=false
 keep_force=false
 kill_force=false
-statusline=:
+titleopt=p
 alpha_order=false
 OPTIND=1
-while getopts 'sSnNfFkKeEHaAh?' opt
+while getopts 'sSnNfFkKeET:aAh?' opt
 do	case ${opt} in
 	s)	save_force=:;;
 	S)	save_force=false;;
@@ -85,7 +98,7 @@ do	case ${opt} in
 	K)	kill_force=false;;
 	e)	error_skip=:;;
 	E)	error_skip=false;;
-	H)	statusline=false;;
+	T)	titleopt=${titleopt}${OPTARG};;
 	a)	alpha_order=:;;
 	A)	alpha_order=false;;
 	*)	Usage 0;;
@@ -93,13 +106,9 @@ do	case ${opt} in
 done
 shift $(( ${OPTIND} - 1 ))
 
-${statusline} && case ${TERM} in
-screen*)
-	softstatus=:;;
-xterm*|rxvt*|aterm*|konsole*|gnome*|Eterm*|kterm*|interix*)
-	softstatus=false;;
-*)
-	statusline=false;;
+case ${titleopt} in
+*[!pPfHsS-]*)
+	Usage;;
 esac
 
 PrintInit() {
@@ -270,7 +279,7 @@ Stop() {
 	rest*)
 		CheckStop "${1}" || return
 		if ${will_restart}
-		then	Title "restart ${filetext}"
+		then	TitleInfo "restart ${filetext}"
 			Echo "Restarting ${filetext}..."
 			"${1}" restart && RemoveTemp
 		else	PrintInit "${1}"
@@ -278,13 +287,13 @@ Stop() {
 		fi;;
 	stop)
 		CheckStop "${1}" || return
-		Title "stop ${filetext}"
+		TitleInfo "stop ${filetext}"
 		Echo "Stopping ${filetext}"
 		"${1}" stop
 		stopret=${?}
 		RemoveTemp && return ${stopret};;
 	zap)
-		Title "zap ${filetext}"
+		TitleInfo "zap ${filetext}"
 		Echo "Zapping ${filetext}"
 		"${1}" zap;;
 	esac
@@ -296,7 +305,7 @@ Start() {
 		return 0
 	fi
 	filetext=${1#*squash_}
-	Title "start ${filetext}"
+	TitleInfo "start ${filetext}"
 	Echo "Starting ${filetext}..."
 	"${1}" start
 }

@@ -1,6 +1,6 @@
 # (C) Martin V\"ath <martin@mvath.de>
 
-AC_INIT([squash_dir], [11.12])
+AC_INIT([squash_dir], [11.13])
 AC_PREREQ([2.64])
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_FILES([Makefile])

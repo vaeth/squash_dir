@@ -5,7 +5,7 @@ _arguments -s -S -A '-*' : \
 '-k[kill changes\:  create temporarily $DIR_CHANGE/.No-save]' \
 '-f[force restart; if combined with -s or -n create files anyway]' \
 '-E[do not stop at first error]' \
-'-H[do not support status line display]' \
+'-T+[Pass option \[pPfHsS-\] to the title script; -=no title]:title option:(p P f H s S -)' \
 '-a[alphabetic order]' \
 '-e[cancel previous -E]' \
 '-T[cancel previous -t]' \
@@ -14,6 +14,6 @@ _arguments -s -S -A '-*' : \
 '-F[cancel previous -f]' \
 '-K[cancel previous -k]' \
 '-A[cancel previous -a]' \
-'(1 * -)'{'-h','-H','-\\?'}'[help]' \
+'(1 * -)'{'-h','-\\?'}'[help]' \
 '1:action:(status show list info print restart stop start zap)' \
 '*:names:compadd -- /etc/init.d/squash_*(@:t:s/squash_/)'

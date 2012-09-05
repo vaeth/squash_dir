@@ -49,6 +49,9 @@ which understands the option -q.
 Of course, for the case that you use the FILE_TBZ feature, also the
 corresponding TARCMD and its requirement (like tar+bzip2) must exist.
 
+If you want that the hard status line is set, also the title script from
+http://github.com/vaeth/runtitle (version >=2.0) is required in your path.
+
 
 Main Example:
 =============
