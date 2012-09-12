@@ -8,8 +8,10 @@ depend() {
 description='Mount a squashed directory in a writable manner'
 
 extra_commands='will_squash need_squash have_magic have_kill'
+extra_stopped_commands='STOP'
 extra_started_commands='print_dir_change print_dir_squash'
 
+description_STOP='Execute actions of stop even if starting failed. Use with extreme care!'
 description_will_squash='print 1 to stderr if stop operation would re-squash'
 description_need_squash='print 1 to stderr if new data was written'
 description_have_magic='print 1 to stderr if $MAGIC_FILE exists'
@@ -126,7 +128,10 @@ Lock() {
 }
 
 Umount() {
-	Lock umount "${UMOUNT_OPTS}" "${@}" >/dev/null && return
+	if [ -z "${umount}" ]
+	then	umount=`Which umount` || umount=/bin/umount
+	fi
+	Lock "${umount}" "${UMOUNT_OPTS}" "${@}" >/dev/null && return
 	umountstat=${?}
 	case ${LAZY_UMOUNT-y} in
 	[yYtT:1]*)
@@ -383,10 +388,13 @@ MountRW() {
 	Mkdir "${DIRECTORY}" || return
 	Mktempdir ${DIR_CHANGE_temp} DIR_CHANGE DIR_CHANGE_name || return
 	Mountunion && return
-	mountrwstat=${?}
+	eerror "All attempts to mount ${DIRECTORY} writable failed"
+	ewarn "rbinding ${DIRECTORY} as a read-only fallback"
 	if Mount --rbind "${mount_squash}" -- "${DIRECTORY}"
-	then	einfo "Mounted ${DIRECTORY} readonly"
-	else	Error ${?} "Failed even rbinding ${DIRECTORY}"
+	then	mountrwstat=0
+		einfo "Mounted ${DIRECTORY} readonly"
+	else	mountrwstat=${?}
+		Error ${?} "Failed even rbinding ${DIRECTORY}"
 	fi
 	return ${mountrwstat}
 }
@@ -682,8 +690,13 @@ DoKill() {
 	return ${kill_stat}
 }
 
-stop() {
+STOP() {
 	Check && Store && UmountAll && DoKill && RmNamefile
+
+}
+
+stop() {
+	STOP
 }
 
 will_squash() {

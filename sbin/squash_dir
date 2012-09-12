@@ -45,32 +45,36 @@ Die() {
 }
 
 Usage() {
-	Echo "Usage: ${0##*/} [option] status|restart|stop|start|zap [masks]
+	Echo \
+"Usage: ${0##*/} [option] status|restart|start|stop|STOP|zap [masks]
 Show the status of all squash_* initscripts or (re)start|stop them.
 If [masks] are given only the squash_[masks] initscripts are considered;
 an empty [masks] is equivalent to '*'.
 Options:
-  -s  Squash data on stop/restart even if THRESHOLD is not reached.
-      This is done by temporarily creating \$DIR_CHANGE/.do-save
-      if there is new data.
-  -n  Avoid squashing data on stop/restart.
-      This is done by temporarily creating \$DIR_CHANGE/.no-save
-      if changes would be saved. This option deactivates -s
-  -f  With restart: restart also those scripts which would not save any data.
-      If combined with -s, \$DIR_CHANGE/.do-save is created temporarily
-      even if there is no new data.
-      If combined with -n,  \$DIR_CHANGE/.no-save is created temporarily.
-  -k  With stop or restart, \$DIR_CHANGE/.No-save is created temporarily.
-      This means that \$DIR_CHANGE will be killed without re-squashing!
-      Use with extreme care!
-  -e  Skip rest after first error (default)
-  -E  Do not skip rest after first error
-  -H  Do not modify status line
-  -S  Cancel previous -s
-  -N  Cancel previous -n
-  -F  Cancel previous -f
-  -K  Cancel previous -k
-  -T[fHsS-] pass option(s) to the title script; - means no title
+-s  Squash data on stop/restart even if THRESHOLD is not reached.
+    This is done by temporarily creating \$DIR_CHANGE/.do-save
+    if there is new data.
+-n  Avoid squashing data on stop/restart.
+    This is done by temporarily creating \$DIR_CHANGE/.no-save
+    if changes would be saved. This option deactivates -s
+-f  With restart: restart also those scripts which would not save any data.
+    If combined with -s, \$DIR_CHANGE/.do-save is created temporarily
+    even if there is no new data.
+    If combined with -n,  \$DIR_CHANGE/.no-save is created temporarily.
+-k  With stop or restart, \$DIR_CHANGE/.No-save is created temporarily.
+    This means that \$DIR_CHANGE will be killed without re-squashing!
+    Use with extreme care!
+-a  Execute matching squash_[masks] scripts in alphabetic order.
+    Without this option, the order is that of [masks].
+-E  Do not skip rest after first error
+-T[pPfHsS-] pass option(s) to the title script; - means no title.
+    p is the default
+-e  Cancel previous -E (i.e. stop at first error; this is the default).
+-S  Cancel previous -s
+-N  Cancel previous -n
+-F  Cancel previous -f
+-K  Cancel previous -k
+-A  Cancel previous -a
 Alias/shortcuts:
 Instead of \"status\" you can also say \"show\", \"print\", \"info\", \"list\".
 All these can be abbreviated by their first letters until unique,
@@ -267,17 +271,30 @@ CheckStop() {
 	esac
 }
 
+CheckRunning() {
+	if "${1}" -q status
+	then	if ! ${2:-:}
+		then	Echo "${1} was already started"
+			return 1
+		fi
+	elif ${2:-:}
+	then	Echo "${1} is not running"
+		return 1
+	fi
+}
+
 Stop() {
 	stoparg=${1}
 	shift
-	if ! "${1}" -q status
-	then	Echo "${1} is not running"
-		return
-	fi
+	need_running=:
+	case ${stoparg} in
+	STOP)
+		need_running=false;;
+	esac
+	CheckRunning "${1}" ${need_running} || return 0
 	filetext=${1#*squash_}
 	case ${stoparg} in
 	rest*)
-		CheckStop "${1}" || return
 		if ${will_restart}
 		then	TitleInfo "restart ${filetext}"
 			Echo "Restarting ${filetext}..."
@@ -285,25 +302,24 @@ Stop() {
 		else	PrintInit "${1}"
 			PrintNoSave ${checked_need} "${1}"
 		fi;;
-	stop)
-		CheckStop "${1}" || return
-		TitleInfo "stop ${filetext}"
-		Echo "Stopping ${filetext}"
-		"${1}" stop
+	stop|STOP)
+		if ${need_running}
+		then	TitleInfo "stop ${filetext}"
+			Echo "stopping ${filetext}"
+		else	TitleInfo "stop nunrunning ${filetext}"
+			Echo "stopping nonrunning ${filetext}"
+		fi
+		"${1}" ${stoparg}
 		stopret=${?}
 		RemoveTemp && return ${stopret};;
 	zap)
-		TitleInfo "zap ${filetext}"
 		Echo "Zapping ${filetext}"
 		"${1}" zap;;
 	esac
 }
 
 Start() {
-	if "${1}" -q status
-	then	Echo "${1} was already started"
-		return 0
-	fi
+	CheckRunning "${1}" false || return
 	filetext=${1#*squash_}
 	TitleInfo "start ${filetext}"
 	Echo "Starting ${filetext}..."
@@ -401,6 +417,8 @@ re*)
 	Doall -restart Stop "${@}";;
 sto*)
 	Doall -stop Stop "${@}";;
+S*)
+	Doall -STOP Stop "${@}";;
 z*)
 	Doall -zap Stop "${@}";;
 star*)

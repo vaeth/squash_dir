@@ -1,5 +1,12 @@
 # ChangeLog for squash_dir
 
+*squash_dir-11.14
+	Martin Väth <martin at mvath.de>:
+	- "Succeed" (with error message) when using the read-only fallback
+	- Introduce STOP action/parameter to execute the stop action even
+	  if starting failed. Use with extreme care!
+	- Fix help to describe options -T, -a, -A, and remove obsoleted -H
+
 *squash_dir-11.13
 	Martin Väth <martin at mvath.de>:
 	- Rely on title script for status line support

@@ -15,5 +15,5 @@ _arguments -s -S -A '-*' : \
 '-K[cancel previous -k]' \
 '-A[cancel previous -a]' \
 '(1 * -)'{'-h','-\\?'}'[help]' \
-'1:action:(status show list info print restart stop start zap)' \
+'1:action:(status show list info print restart start stop STOP zap)' \
 '*:names:compadd -- /etc/init.d/squash_*(@:t:s/squash_/)'
