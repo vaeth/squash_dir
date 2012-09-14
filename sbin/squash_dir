@@ -295,6 +295,7 @@ Stop() {
 	filetext=${1#*squash_}
 	case ${stoparg} in
 	rest*)
+		CheckStop "${1}" || return
 		if ${will_restart}
 		then	TitleInfo "restart ${filetext}"
 			Echo "Restarting ${filetext}..."
@@ -303,6 +304,7 @@ Stop() {
 			PrintNoSave ${checked_need} "${1}"
 		fi;;
 	stop|STOP)
+		CheckStop "${1}" || return
 		if ${need_running}
 		then	TitleInfo "stop ${filetext}"
 			Echo "stopping ${filetext}"

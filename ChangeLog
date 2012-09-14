@@ -1,5 +1,9 @@
 # ChangeLog for squash_dir
 
+*squash_dir-11.15
+	Martin Väth <martin at mvath.de>:
+	- Fix regression in wrapper script
+
 *squash_dir-11.14
 	Martin Väth <martin at mvath.de>:
 	- "Succeed" (with error message) when using the read-only fallback
