@@ -1,8 +1,12 @@
 # ChangeLog for squash_dir
 
+*squash_dir-11.16
+	Martin Väth <martin at mvath.de>:
+	- Fix regression in wrapper script (start of running is not an error)
+
 *squash_dir-11.15
 	Martin Väth <martin at mvath.de>:
-	- Fix regression in wrapper script
+	- Fix regression in wrapper script (two lines removed by mistake)
 
 *squash_dir-11.14
 	Martin Väth <martin at mvath.de>:

@@ -321,7 +321,7 @@ Stop() {
 }
 
 Start() {
-	CheckRunning "${1}" false || return
+	CheckRunning "${1}" false || return 0
 	filetext=${1#*squash_}
 	TitleInfo "start ${filetext}"
 	Echo "Starting ${filetext}..."
