@@ -1,5 +1,17 @@
 # ChangeLog for squash_dir
 
+*squash_dir-12.0
+	Martin Väth <martin at mvath.de>:
+	- squash_dir wrapper now uses effective values of IGNORE_THRESHOLD,
+	  MAGIC_FILE, KILL_FILE, instead of the defaults.
+	- New commands: print_ignore_threshold, print_magic_file,
+	  print_kill_file
+	- Make all commands callable also for running init-script,
+	  although this may be dangerous.
+	- Make STOP callable also for running init-script.
+	- Honour COMPRESSION and MKSQUASHFS also for the first initialization;
+	  thanks to Gordex to reporting.
+
 *squash_dir-11.16
 	Martin Väth <martin at mvath.de>:
 	- Fix regression in wrapper script (start of running is not an error)

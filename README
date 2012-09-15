@@ -264,6 +264,9 @@ helper options for the /etc/init.d/squash_* scripts which are meant to be
 used from other scripts (for example, they are used by the /usr/sbin/squash_dir
 command line interface).
 
+STOP:        Executes the actions of "stop" without actually stopping.
+             Moreover, this can be called even if the script was not started.
+             Use this only in case of fatal problems and with extreme care!
 will_squash: returns true/false (and a corresponding message unless -q is
              used) depending on whether the stop operation would re-squash
              or kill $DIR_CHANGE (the latter means that $KILL_FILE exists).
@@ -276,6 +279,16 @@ print_dir_change: outputs the effective path to DIR_CHANGE to stderr,
              taking the temporary name feature into account (see below).
 print_dir_squash: outputs the effective path to DIR_SQUASH to stderr,
              taking the temporary name feature into account (see below).
+print_ignore_threshold: outputs the effective value of IGNORE_THRESHOLD,
+             taking the temporary name feature into account (see below).
+             If THRESHOLD is not used, the empty string is output.
+print_magic_file: outputs the effective value of MAGIC_FILE,
+             taking the temporary name feature into account (see below).
+print_kill_file: outputs the effective value of KILL_FILE,
+             taking the temporary name feature into account (see below).
+
+(It may be faulty to use the print_* commands if the temporary name
+feature is used in the corresponding paths and the script was not started).
 
 Unfortunately, the return value of initscripts is ignored with openrc.
 Therefore, the answer ("1" for true, "0" for false) for the first three

@@ -52,16 +52,19 @@ If [masks] are given only the squash_[masks] initscripts are considered;
 an empty [masks] is equivalent to '*'.
 Options:
 -s  Squash data on stop/restart even if THRESHOLD is not reached.
-    This is done by temporarily creating \$DIR_CHANGE/.do-save
-    if there is new data.
+    This is done by temporarily creating \$IGNORE_THRESHOLD
+    (typically \$DIR_CHANGE/.do-save) if there is new data.
 -n  Avoid squashing data on stop/restart.
-    This is done by temporarily creating \$DIR_CHANGE/.no-save
-    if changes would be saved. This option deactivates -s
+    This is done by temporarily creating \$MAGIC_FILE
+    (\$DIR_CHANGE/.no-save) if changes would be saved.
+    This option deactivates -s
 -f  With restart: restart also those scripts which would not save any data.
-    If combined with -s, \$DIR_CHANGE/.do-save is created temporarily
+    With STOP: Also execute STOP-action of running scripts.
+    If combined with -s, \$IGNORE_THRESHOLD is created temporarily
     even if there is no new data.
-    If combined with -n,  \$DIR_CHANGE/.no-save is created temporarily.
--k  With stop or restart, \$DIR_CHANGE/.No-save is created temporarily.
+    If combined with -n, \$MAGIC_FILE is always created temporarily.
+-k  With stop, STOP, or restart, \$KILL_FILE (usually \$DIR_CHANGE/.No-save)
+    is created temporarily.
     This means that \$DIR_CHANGE will be killed without re-squashing!
     Use with extreme care!
 -a  Execute matching squash_[masks] scripts in alphabetic order.
@@ -78,7 +81,12 @@ Options:
 Alias/shortcuts:
 Instead of \"status\" you can also say \"show\", \"print\", \"info\", \"list\".
 All these can be abbreviated by their first letters until unique,
-e.g. \"sh\" or \"sho\" instead of \"show\" or \"z\" instead of \"zap\"."
+e.g. \"sh\" or \"sho\" instead of \"show\" or \"z\" instead of \"zap\".
+
+Use STOP with extreme care, especially if combined with -s -n -k:
+This combination should not be used if some non-running script from
+squash_[masks] uses the temporary name feature in \$DIR_CHANGE, more precisely,
+in the path of \$IGNORE_THRESHOLD, \$MAGIC_FILE, or \$KILL_FILE respectively."
 	Exit ${1:-1}
 }
 
@@ -189,21 +197,18 @@ RemoveTemp() {
 	trap - EXIT HUP INT TERM
 }
 
-GetDirChange() {
-	[ -n "${dirchange:++}" ] && return
-	dirchange=`"${1}" print_dir_change 2>&1` \
-	&& ! case ${dirchange} in
-	*/)	false;;
-	esac || {
-		Error "error: ${1} print_dir_change: ${dirchange}"
+GetSpecFile() {
+	spec_file=`"${1}" print_${2} 2>&1 && echo x` || {
+		Error "error: ${1} print_${2}: ${spec_file}"
 		dirchange=
 		return 1
 	}
+	spec_file=${spec_file%x}
 }
 
 create_trap=:
 CreateFile() {
-	test -e "${2}" && return
+	[ -n "${2}" ] && ! test -e "${2}" || return 0
 	eval ${1}=\${2}
 	if ${create_trap}
 	then	trap RemoveTemp EXIT HUP INT TERM
@@ -215,16 +220,17 @@ CreateFile() {
 }
 
 CreateDosave() {
-	GetDirChange "${1}" && CreateFile dosave_file "${dirchange}/.do-save"
+	GetSpecFile "${1}" ignore_threshold && \
+		CreateFile dosave_file "${spec_file}"
 }
 
 
 CreateNosave() {
-	GetDirChange "${1}" && CreateFile nosave_file "${dirchange}/.no-save"
+	GetSpecFile "${1}" magic_file && CreateFile nosave_file "${spec_file}"
 }
 
 CreateKillfile() {
-	GetDirChange "${1}" && CreateFile kill_file "${dirchange}/.No-save"
+	GetSpecFile "${1}" kill_file && CreateFile kill_file "${spec_file}"
 }
 
 CheckStop() {
@@ -274,11 +280,11 @@ CheckStop() {
 CheckRunning() {
 	if "${1}" -q status
 	then	if ! ${2:-:}
-		then	Echo "${1} was already started"
+		then	${3:-Echo} "${1} was already started"
 			return 1
 		fi
 	elif ${2:-:}
-	then	Echo "${1} is not running"
+	then	${3:-Echo} "${1} is not running"
 		return 1
 	fi
 }
@@ -286,12 +292,17 @@ CheckRunning() {
 Stop() {
 	stoparg=${1}
 	shift
-	need_running=:
 	case ${stoparg} in
 	STOP)
-		need_running=false;;
+		is_running=false
+		if ${force}
+		then	CheckRunning "${1}" false : || is_running=:
+		else	CheckRunning "${1}" false || return 0
+		fi;;
+	*)
+		is_running=:
+		CheckRunning "${1}" || return 0;;
 	esac
-	CheckRunning "${1}" ${need_running} || return 0
 	filetext=${1#*squash_}
 	case ${stoparg} in
 	rest*)
@@ -305,11 +316,14 @@ Stop() {
 		fi;;
 	stop|STOP)
 		CheckStop "${1}" || return
-		if ${need_running}
+		if [ "${stoparg}" = 'stop' ]
 		then	TitleInfo "stop ${filetext}"
 			Echo "stopping ${filetext}"
-		else	TitleInfo "stop nunrunning ${filetext}"
-			Echo "stopping nonrunning ${filetext}"
+		elif ${is_running}
+		then	TitleInfo "STOP-action of running ${filetext}"
+			Echo "STOP-action of running ${filetext}"
+		else	TitleInfo "STOP non-running ${filetext}"
+			Echo "STOPPING non-running ${filetext}"
 		fi
 		"${1}" ${stoparg}
 		stopret=${?}

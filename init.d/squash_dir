@@ -7,17 +7,21 @@ depend() {
 
 description='Mount a squashed directory in a writable manner'
 
-extra_commands='will_squash need_squash have_magic have_kill'
-extra_stopped_commands='STOP'
-extra_started_commands='print_dir_change print_dir_squash'
+extra_commands='STOP will_squash need_squash have_magic have_kill'
+extra_commands=${extra_commands}' print_dir_change print_dir_squash'
+extra_commands=${extra_commands}' print_ignore_threshold print_magic_file'
+extra_commands=${extra_commands}' print_kill_file'
 
-description_STOP='Execute actions of stop even if starting failed. Use with extreme care!'
+description_STOP='Execute actions of stop without actually stopping. Dangerous!'
 description_will_squash='print 1 to stderr if stop operation would re-squash'
 description_need_squash='print 1 to stderr if new data was written'
 description_have_magic='print 1 to stderr if $MAGIC_FILE exists'
 description_have_kill='print 1 to stderr if $KILL_FILE exists'
 description_print_dir_change='print effective $DIR_CHANGE to stderr'
 description_print_dir_squash='print effective $DIR_SQUASH to stderr'
+description_print_ignore_threshold='print effective $IGNORE_THRESHOLD to stderr; empty if unused'
+description_print_magic_file='print effective $MAGIC_FILE to stderr'
+description_print_kill_file='print effective $KILL_FILE to stderr'
 
 Which() {
 	command -v "${1}" 2>/dev/null
@@ -233,7 +237,8 @@ CreateFirstTime() {
 		return 2
 	}
 	einfo "Squashing ${DIRECTORY} to ${FILE_SQFS}"
-	mksquashfs "${DIRECTORY}" "${FILE_SQFS}" || {
+	mksquashfs ${COMPRESSION:+comp "${COMPRESSION}"} ${MKSQUASHFS} \
+		"${DIRECTORY}" "${FILE_SQFS}" || {
 		Error ${?} "mksquashfs failed. Exiting."
 		return
 	}
@@ -295,6 +300,8 @@ Check() {
 		eend 2
 		return
 	fi
+	: ${UMOUNT_OPTS=-i}
+	: ${COMPRESSION=xz}
 	if ! test -f "${FILE_SQFS}"
 	then	if [ "${1}" = start ]
 		then	CreateFirstTime || {
@@ -307,8 +314,6 @@ Check() {
 			return
 		fi
 	fi
-	: ${UMOUNT_OPTS=-i}
-	: ${COMPRESSION=xz}
 }
 
 Aufs() {
@@ -498,13 +503,21 @@ Sqfsd() {
 		&& mv -f -- "${TMP_SQFS}" "${FILE_SQFS}"
 }
 
-HaveMagic() {
+CalcMagic() {
 	: ${MAGIC_FILE:=${DIR_CHANGE}/.no-save}
+}
+
+HaveMagic() {
+	CalcMagic
 	test -e "${MAGIC_FILE}"
 }
 
-HaveKill() {
+CalcKill() {
 	: ${KILL_FILE:=${DIR_CHANGE}/.No-save}
+}
+
+HaveKill() {
+	CalcKill
 	test -e "${KILL_FILE}"
 }
 
@@ -577,11 +590,15 @@ done
 	)
 }
 
-ExceedThreshold() {
+CalcIgnoreThreshold() {
 	: ${THRESHOLD:=0}
-	[ ${THRESHOLD} -gt 0 ] || return 0
+	[ ${THRESHOLD} -gt 0 ] || return
 	Normalize IGNORE_THRESHOLD || \
 		IGNORE_THRESHOLD="${DIR_CHANGE}/.do-save"
+}
+
+ExceedThreshold() {
+	CalcIgnoreThreshold || return 0
 	test -e "${IGNORE_THRESHOLD}" && return
 	exceedthresholdn=`du -s -k -- "${DIR_CHANGE}" | cut -f 1`
 	[ "${THRESHOLD}" -le "${exceedthresholdn}" ]
@@ -772,6 +789,24 @@ have_kill() {
 	echo 0 >&2
 	einfo "No kill-file ${KILL_FILE} exists."
 	return 1
+}
+
+print_ignore_threshold() {
+	Check || return ${?}
+	CalcIgnoreThreshold && printf '%s' "${IGNORE_THRESHOLD}" >&2
+	return 0
+}
+
+print_magic_file() {
+	Check || return ${?}
+	CalcMagic && printf '%s' "${MAGIC_FILE}" >&2
+	return 0
+}
+
+print_kill_file() {
+	Check || return ${?}
+	CalcKill && printf '%s' "${KILL_FILE}" >&2
+	return 0
 }
 
 print_dir_change() {
