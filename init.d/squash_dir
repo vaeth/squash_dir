@@ -370,7 +370,7 @@ Funionfs() {
 }
 
 Mountunion() {
-	for mountunion in ${ORDER-aufs overlayfs unionfs-fuse unionfs funionfs}
+	for mountunion in ${ORDER-overlayfs aufs unionfs-fuse funionfs unionfs}
 	do	case ${mountunion} in
 		aufs)
 			Aufs && return;;

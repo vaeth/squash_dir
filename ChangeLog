@@ -1,5 +1,13 @@
 # ChangeLog for squash_dir
 
+*squash_dir-12.1
+	Martin Väth <martin at mvath.de>:
+	- Change default of ORDER to honour changed likelihood of availability:
+	  No recent aufs for kernel-3.6, but overlayfs works and might even be
+	  included into the mainline kernel; unionfs seems to be dead.
+	  For overlayfs, you must use the top patches in "heads":
+	  http://git.kernel.org/?p=linux/kernel/git/mszeredi/vfs.git;a=summary
+
 *squash_dir-12.0
 	Martin Väth <martin at mvath.de>:
 	- squash_dir wrapper now uses effective values of IGNORE_THRESHOLD,
