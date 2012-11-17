@@ -1,19 +1,40 @@
 #compdef squash_dir
+local context state state_descr line
+typeset -A opt_args
 _arguments -s -S -A '-*' : \
 '-s[squash always\: create temporarily $DIR_CHANGE/.do-save]' \
 '-n[no squashing\:  create temporarily $DIR_CHANGE/.no-save]' \
 '-k[kill changes\:  create temporarily $DIR_CHANGE/.No-save]' \
 '-f[force restart; if combined with -s or -n create files anyway]' \
 '-E[do not stop at first error]' \
-'-T+[Pass option \[pPfHsS-\] to the title script; -=no title]:title option:(p P f H s S -)' \
+'*-T+[Set title option OPT]:title option:_title_opt' \
 '-a[alphabetic order]' \
 '-e[cancel previous -E]' \
-'-T[cancel previous -t]' \
 '-S[cancel previous -s]' \
 '-N[cancel previous -n]' \
 '-F[cancel previous -f]' \
 '-K[cancel previous -k]' \
 '-A[cancel previous -a]' \
 '(1 * -)'{'-h','-\\?'}'[help]' \
-'1:action:(status show list info print restart start stop STOP zap)' \
+'1:action:->action' \
 '*:names:compadd -- /etc/init.d/squash_*(@:t:s/squash_/)'
+local ret=$?
+case $state in
+(action)
+	local action
+	action=(
+	'status:show status'
+	'show:show status'
+	'list:show status'
+	'info:show status'
+	'print:show status'
+	'restart:restart init scripts'
+	'start:start init scripts'
+	'stop:stop init scripts'
+	'STOP:execute stop actions without stopping'
+	'zap:zap init scripts to stopped state'
+	)
+	_describe -t action 'action' action
+	ret=$?;;
+esac
+return ret

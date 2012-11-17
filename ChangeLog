@@ -1,5 +1,9 @@
 # ChangeLog for squash_dir
 
+*squash_dir-12.2
+	Martin Väth <martin at mvath.de>:
+	- Improve zsh completion, relying on >=runtitle-2.3
+
 *squash_dir-12.1
 	Martin Väth <martin at mvath.de>:
 	- Change default of ORDER to honour changed likelihood of availability:
