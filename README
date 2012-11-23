@@ -553,7 +553,7 @@ ORDER
 	If the variable DIR_CHANGE is empty, this variable is ignored.
 	Otherwise, its value should be a string consisting of
 	all (or some) of the words
-		aufs overlayfs unionfs-fuse unionfs funionfs   (*)
+		overlayfs aufs unionfs-fuse funionfs unionfs  (*)
 	Then the corresponding tool is used to make DIRECTORY writable.
 	The tools are attempted in the given order: If the first tool
 	fails, a warning message is printed, and the next tool is

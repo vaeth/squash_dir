@@ -1,5 +1,11 @@
 # ChangeLog for squash_dir
 
+*squash_dir-12.3
+	Martin Väth <martin at mvath.de>:
+	- New ./configure options --with-first-order --with-order for patching
+	- Fix COMPRESSION handling. Thanks to Massimo B. for reporting.
+	- Cosmetical changes in formatting, autotools handling, zsh completion
+
 *squash_dir-12.2
 	Martin Väth <martin at mvath.de>:
 	- Improve zsh completion, relying on >=runtitle-2.3

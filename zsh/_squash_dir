@@ -16,25 +16,25 @@ _arguments -s -S -A '-*' : \
 '-K[cancel previous -k]' \
 '-A[cancel previous -a]' \
 '(1 * -)'{'-h','-\\?'}'[help]' \
-'1:action:->action' \
+'1:cmds:->cmds' \
 '*:names:compadd -- /etc/init.d/squash_*(@:t:s/squash_/)'
 local ret=$?
 case $state in
-(action)
-	local action
-	action=(
+(cmds)
+	local cmds
+	cmds=(
 	'status:show status'
 	'show:show status'
 	'list:show status'
 	'info:show status'
 	'print:show status'
-	'restart:restart init scripts'
-	'start:start init scripts'
-	'stop:stop init scripts'
-	'STOP:execute stop actions without stopping'
-	'zap:zap init scripts to stopped state'
+	'restart:restart squash_dir'
+	'start:start squash_dir'
+	'stop:stop squash_dir'
+	'STOP:execute stop action without stopping'
+	'zap:zap squash_dir to stopped state'
 	)
-	_describe -t action 'action' action
+	_describe -t commands 'command' cmds
 	ret=$?;;
 esac
 return ret

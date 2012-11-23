@@ -16,6 +16,9 @@
 /doxygen.cfg
 /stamp-h1
 
+# temporary files:
+/patching.tmp
+
 # General patterns are last:
 !*.in
 !*Makefile.am

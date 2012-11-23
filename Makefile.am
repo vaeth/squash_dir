@@ -14,6 +14,9 @@ README \
 AUTHORS \
 ChangeLog
 
+CLEANFILES = \
+patching.tmp
+
 # Actually, we want nobase_dist_sysconf_SCRIPTS,
 # but stupid automake claims it knows better than me and forbids this.
 pkgdatadir=$(sysconfdir)

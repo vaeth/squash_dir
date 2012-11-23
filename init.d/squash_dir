@@ -65,7 +65,8 @@ Normalize() {
 				&& normalizep=${normalizep%A}
 		fi && [ -n "${normalizep:++}" ] && normalizen=${normalizep}
 		while ! case ${normalizen} in
-			*//*)	false;;
+			*//*)
+				false;;
 			esac
 		do	normalizen="${normalizen%%//*}/${normalizen#*//}"
 		done
@@ -100,8 +101,10 @@ Mktempdir() {
 	eval mktempdirv=\${${2}}
 	mktempdirv=${mktempdirv%/}
 	case ${mktempdirv} in
-	/*)	:;;
-	*)	return ${mktempdirtstat};;
+	/*)
+		:;;
+	*)
+		return ${mktempdirtstat};;
 	esac
 	if ${have_name_file}
 	then	printf "%s='%s'\n" ${3} "${mktempdirv##*/}" >>"${NAME_FILE}"
@@ -118,7 +121,8 @@ Mktempdir() {
 
 Lock() {
 	case ${LOCKFILE-auto} in
-	auto)	if test -h /etc/mtab
+	auto)
+		if test -h /etc/mtab
 		then	LOCKFILE=
 		else	LOCKFILE='/etc/mtab.lock'
 			false
@@ -158,8 +162,10 @@ Cleardir() {
 	cleardirt=${3:-:}
 	eval "for cleardiri in \"\${cleardird}\"/* \"\${cleardird}\"/.*
 	do	case \${cleardiri##*/} in
-		''|.|..${cleardire})	continue;;
-		'*'|'.*')	test -e \"\${cleardiri}\" || continue;;
+		''|.|..${cleardire})
+			continue;;
+		'*'|'.*')
+			test -e \"\${cleardiri}\" || continue;;
 		esac
 		eval \"\${cleardirt}\"
 		cleardirt=:
@@ -185,7 +191,8 @@ Checktemp() {
 	*XXXXXX)
 		${1}_temp=:
 		[ ${#} -eq 2 ] && : \${RM_${1}:=${2}};;
-	*)	${1}_temp=false;;
+	*)
+		${1}_temp=false;;
 	esac"
 }
 
@@ -228,8 +235,10 @@ CreateFirstTime() {
 	case ${FILE_SQFS} in
 	"${DIRECTORY}"/*|"${DIR_CHANGE}"/*|"${DIR_SQUASH}"/*|'/.sqfs'|'/')
 		false;;
-	/*)	! test -e "${FILE_SQFS}";;
-	*)	false;;
+	/*)
+		! test -e "${FILE_SQFS}";;
+	*)
+		false;;
 	esac || {
 		eerror "Something is strange with this configuration:"
 		eerror "You used a bad filename for FILE_SQFS or it appears in a bad path."
@@ -237,7 +246,7 @@ CreateFirstTime() {
 		return 2
 	}
 	einfo "Squashing ${DIRECTORY} to ${FILE_SQFS}"
-	mksquashfs ${COMPRESSION:+comp "${COMPRESSION}"} ${MKSQUASHFS} \
+	mksquashfs ${COMPRESSION:+-comp "${COMPRESSION}"} ${MKSQUASHFS} \
 		"${DIRECTORY}" "${FILE_SQFS}" || {
 		Error ${?} "mksquashfs failed. Exiting."
 		return
@@ -267,7 +276,8 @@ Check() {
 		"${TMPDIR}" "${FILE_SQFS}" "${FILE_SQFS_OLD}" \
 		"${FILE_TBZ}" "${FILE_TBZ_OLD}" "${NAME_FILE}"
 	do	case ${checki} in
-		''|/*)	continue;;
+		''|/*)
+			continue;;
 		esac
 		eend 2 "${checki} is not an absolute path"
 		return
@@ -492,11 +502,13 @@ Sqfsd() {
 	sqfsdaddopt='-noappend'
 	sqfsdredir='>/dev/null'
 	case ${VERBOSE_MODE} in
-	0)	sqfsdaddopt="${sqfsdaddopt} -no-progress";;
-	2)	sqfsdredir=;;
+	0)
+		sqfsdaddopt=${sqfsdaddopt}' -no-progress';;
+	2)
+		sqfsdredir=;;
 	esac
 	[ -n "${COMPRESSION:++}" ] && \
-		sqfsdaddopt="${sqfsdaddopt} "'-comp "${COMPRESSION}"'
+		sqfsdaddopt=${sqfsdaddopt}' -comp "${COMPRESSION}"'
 	eval "mksquashfs \"\${DIRECTORY}\" \"\${TMP_SQFS}\" \
 		${sqfsdaddopt} \${MKSQUASHFS} ${sqfsdredir}" \
 		&& MvSqfsOld \
@@ -526,7 +538,8 @@ CalcIgnore() {
 	shift
 	calcignorer=${1}
 	case ${calcignorer} in
-	*' '*)	calcignorer="'(' ${calcignorer} ')'";;
+	*' '*)
+		calcignorer="'(' ${calcignorer} ')'";;
 	esac
 	shift
 	calcignoreb=
@@ -537,7 +550,8 @@ CalcIgnore() {
 		calcignorer="${calcignorer} \"\${DIR_CHANGE}${calcignorei}\""
 	done
 	case ${calcignorev} in
-	'@'*)	calcignorev=${calcignorev#?}
+	'@'*)
+		calcignorev=${calcignorev#?}
 		[ -n "${calcignoreb:++}" ] && \
 			calcignorer="'(' ${calcignorer} ')'";;
 	esac
@@ -573,7 +587,8 @@ NeedSquash() {
 	# Do the time-consuming file-comparison only if it appears necessary:
 	(	d="for i
 do	case \${i#\"\${DIR_CHANGE}/\"} in
-${IGNORETOUCH})	c=\${DIR_SQUASH}/\${i##*/}
+${IGNORETOUCH})
+	c=\${DIR_SQUASH}/\${i##*/}
 	if test -L \"\${i}\"
 	then	test -L \"\${c}\"
 	else	! test -L \"\${c}\"
