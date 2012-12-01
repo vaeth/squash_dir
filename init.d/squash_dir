@@ -354,14 +354,8 @@ UnionfsFuse() {
 	then	ewarn "unionfs-fuse appears not to be installed"
 		return 1
 	fi
-	if [ -z "${UNIONFS_FUSE_HIDE+set}" ]
-	then	if unionfs --help 2>&1 | grep -q hide_meta_files
-		then	UNIONFS_FUSE_HIDE='-o hide_meta_files'
-		else	UNIONFS_FUSE_HIDE=
-		fi
-	fi
 	eval "\"\${unionfsfuse}\" \
-	${MOUNT_UNIONFS_FUSE--o cow -o allow_other -o use_ino -o nonempty -o noatime $UNIONFS_FUSE_HIDE} \
+	${MOUNT_UNIONFS_FUSE--o cow -o allow_other -o use_ino -o nonempty -o noatime -o hide_meta_files} \
 		\"\${DIR_CHANGE}=RW:\${mount_squash}=RO\" \
 		\"\${DIRECTORY}\"" || \
 	Warn ${?} "Failed mounting ${DIR_CHANGE} with unionfs-fuse"

@@ -1,5 +1,9 @@
 # ChangeLog for squash_dir
 
+*squash_dir-12.4
+	Martin Väth <martin at mvath.de>:
+	- Remove support for obsolete <sys-fs/unionfs-fuse-0.25
+
 *squash_dir-12.3
 	Martin Väth <martin at mvath.de>:
 	- New ./configure options --with-first-order --with-order for patching

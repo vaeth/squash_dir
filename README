@@ -13,6 +13,7 @@ using some of (depending on the configuration and what is available):
 	overlayfs, see
 		http://git.kernel.org/?p=linux/kernel/git/mszeredi/vfs.git
 	unionfs-fuse, see http://podgorny.cz/moin/UnionFsFuse
+		(unionfs-fuse-0.25 or newer is required)
 	unionfs, see http://www.fsl.cs.sunysb.edu/project-unionfs.html
 	funionfs, see http://bugs.gentoo.org/show_bug.cgi?id=151673
 
@@ -44,8 +45,6 @@ Moreover, a POSIX shell and "find" are needed with the following extensions
 	(c) "flock" unless you disable file locking (see LOCKFILE below).
 Some standard tools like /bin/false are also assumed (if /bin/false is missing,
 it is also ok, but it must not do something else than return nonzero status).
-In case unionfs-fuse is tried, you need to have some grep in the path
-which understands the option -q.
 Of course, for the case that you use the FILE_TBZ feature, also the
 corresponding TARCMD and its requirement (like tar+bzip2) must exist.
 
@@ -177,39 +176,13 @@ corresponding parameters to execute (some or all) of these commands in a row
 offers with -s resp. -sf also the possibility to e.g. create magic files
 to override the THRESHOLD option).
 
-If you plan to squash the portage tree /usr/portage you should take care
-about the following two points:
-
-1. You almost certainly want to keep $DISTDIR in a different directory
-   in advance: It makes no sense (i.e. it costs enormous time and needs lot
-   of temporary diskspace without much gain) to compress compressed tarballs.
-   Hence:
-   Move /usr/portage/distdir to some other place (outside the /usr/portage
-   hierarchy) and modify DISTDIR in /etc/make.conf correspondingly,
-   before you start the initscripts for the first time.
-
-2. With older versions of unionfs-fuse there is a problem if you use
-   unionfs-fuse for the portage tree:
-   When files are removed from $DIRECTORY, there will appear a directory
-   $DIRECTORY/.unionfs with "magic" content. Similarly, there might appear
-   $DIRECTORY/**/.fuse_hidden* files.
-   You should not touch the content of that directory or these files
-   manually unless you know what you are doing.
-   Unfortunately, emerge --sync (or eix-sync) will by default not know this
-   and try to remove them with rather chaotic consequences.
-   Therefore you must tell emerge --sync to keep this directory untouched.
-   This can be done by adding to /etc/make.conf the line
-
-PORTAGE_RSYNC_EXTRA_OPTS="${PORTAGE_RSYNC_EXTRA_OPTS} --exclude=/.unionfs --exclude=.fuse_hidden*"
-
-   New versions of unionfs-fuse understand the option -o hide_meta_files which
-   will cause $DIRECTORY/.unionfs to not appear. In case unionfs-fuse is used,
-   squash_dir will determine automagically whether this option is understood
-   and use it if possible. Of course, this testing costs some time which you
-   can avoid if you set UNIONFS_FUSE_HIDE="-o hide_meta_files" or
-   UNIONFS_FUSE_HIDE="" explicitly in your configuration. So setting
-   UNIONFS_FUSE_HIDE is recommended if you mainly use unionfs-fuse.
-   Adding the above mentioned line to /etc/make.conf won't hurt anyway.
+If you plan to squash the Gentoo portage tree /usr/portage you should keep
+$DISTDIR in a different directory in advance:
+It makes no sense (i.e. it costs enormous time and needs lot of temporary
+diskspace without much gain) to compress compressed tarballs. Hence:
+Move /usr/portage/distdir to some other place (outside the /usr/portage
+hierarchy) and modify DISTDIR in /etc/make.conf correspondingly,
+before you start the initscripts for the first time.
 
 
 A Word of None-Warning
@@ -638,7 +611,7 @@ MOUNT_UNIONFS_FUSE
 	These are additional mount options used for unionfs-fuse.
 	The default is:
 	-o cow -o allow_other -o use_ino -o nonempty
-	-o noatime ${UNIONFS_FUSE_HIDE}
+	-o noatime -o hide_meta_files
 	So if you modify this variable, you should probably include
 	these options. Omit them only if you know what you are doing.
 
