@@ -48,3 +48,12 @@ make install
 
 The behaviour of "./configure" and "make" is the standard one of
 projects using autotools as the build system.
+The following special options are supported for ./configure:
+
+--with-first-order=STR
+  With STR being one of overlayfs, aufs, unionfs-fuse, funionfs, unionfs
+  Patches the sources such that the corresponding STR becomes the first choice
+  in the default ORDER.
+
+--with-order=STR
+  Patches the sources such that STR becomes the default ORDER.

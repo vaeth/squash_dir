@@ -283,9 +283,14 @@ Check() {
 		return
 	done
 	Normalize TMPDIR || TMPDIR='/tmp'
-	Normalize NAME_FILE || NAME_FILE="/var/run/${SVCNAME}"
+	: ${RUNPATH:=/run}
+	Normalize RUNPATH && test -d "${RUNPATH}" || {
+		RUNPATH=/var/run
+		Normalize RUNPATH && test -d "${RUNPATH}" || RUNPATH=/
+	}
+	Normalize NAME_FILE || NAME_FILE="${RUNPATH%/}/${SVCNAME}"
 	if [ -n "${DIR_CHANGE:++}" ] && [ -z "${DIR_SQUASH:++}" ]
-	then	DIR_SQUASH="/var/run/${SVCNAME}.readonly"
+	then	DIR_SQUASH="${RUNPATH%/}/${SVCNAME}.readonly"
 		: ${RM_DIR_SQUASH=:}
 	fi
 	Checktemp DIR_SQUASH parents
@@ -374,7 +379,7 @@ Funionfs() {
 }
 
 Mountunion() {
-	for mountunion in ${ORDER-overlayfs aufs unionfs-fuse funionfs unionfs}
+	for mountunion in ${ORDER-aufs overlayfs unionfs-fuse funionfs unionfs}
 	do	case ${mountunion} in
 		aufs)
 			Aufs && return;;

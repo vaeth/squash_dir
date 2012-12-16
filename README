@@ -342,6 +342,10 @@ RM_DIR_CHANGE
 	RM_DIR_CHANGE defaults to "parents" if the temporary name
 	feature is used for DIR_CHANGE.
 
+RUNPATH
+	This is only used in the defaults of DIR_SQUASH.
+	It defaults to /run /var/run or /, depending on what exists.
+
 DIR_SQUASH
 	This is a directory which is needed for technical reasons
 	when DIR_CHANGE is non-empty (i.e. if you really want to mount
@@ -359,7 +363,7 @@ DIR_SQUASH
 	variable, but now it is save to use it.
 
 	If you leave this variable empty and DIR_CHANGE is nonempty,
-	DIR_SQUASH defaults to /var/run/${SVCNAME}.readonly
+	DIR_SQUASH defaults to ${RUNPATH}/${SVCNAME}.readonly
 
 	If DIR_CHANGE is empty, DIR_SQUASH is not really needed and
 	should usually be left empty. Nevertheless, if you set
@@ -383,7 +387,7 @@ NAME_FILE
 	DIR_SQUASH, this variable must contain the name of a file
 	which is used to store these temporary names. If no errors
 	occur, this file is created/removed on start/stop.
-	If NAME_FILE is empty, it defaults to /var/run/${SVCNAME}
+	If NAME_FILE is empty, it defaults to ${RUNPATH}/${SVCNAME}
 
 TMP_SQFS
 	This is a filename (which supports the temporary name feature)
@@ -526,7 +530,7 @@ ORDER
 	If the variable DIR_CHANGE is empty, this variable is ignored.
 	Otherwise, its value should be a string consisting of
 	all (or some) of the words
-		overlayfs aufs unionfs-fuse funionfs unionfs  (*)
+		aufs overlayfs unionfs-fuse funionfs unionfs  (*)
 	Then the corresponding tool is used to make DIRECTORY writable.
 	The tools are attempted in the given order: If the first tool
 	fails, a warning message is printed, and the next tool is

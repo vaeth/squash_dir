@@ -1,5 +1,11 @@
 # ChangeLog for squash_dir
 
+*squash_dir-12.5
+	Martin Väth <martin at mvath.de>:
+	- Support RUNPATH
+	- Change default ORDER again: aufs is first as overlayfs seems to have
+	  lacking support starting with kernel 3.7.
+
 *squash_dir-12.4
 	Martin Väth <martin at mvath.de>:
 	- Remove support for obsolete <sys-fs/unionfs-fuse-0.25

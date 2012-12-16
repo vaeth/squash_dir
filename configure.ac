@@ -1,6 +1,6 @@
 # (C) Martin V\"ath <martin@mvath.de>
 
-AC_INIT([squash_dir], [12.4])
+AC_INIT([squash_dir], [12.5])
 AC_PREREQ([2.64])
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_FILES([Makefile])
@@ -23,7 +23,7 @@ AS_VAR_IF([ZSH_COMPLETION], [],
 AC_SUBST([ZSH_COMPLETION])
 
 AC_MSG_CHECKING([for ORDER default])
-AS_VAR_SET([order], ["overlayfs aufs unionfs-fuse funionfs unionfs"])
+AS_VAR_SET([order], ["aufs overlayfs unionfs-fuse funionfs unionfs"])
 AC_ARG_WITH([first-order],
 	[AS_HELP_STRING([--with-first-order=STR],
 		[use STR as first entry in ORDER default])],
