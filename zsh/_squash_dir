@@ -32,6 +32,8 @@ case $state in
 	'start:start squash_dir'
 	'stop:stop squash_dir'
 	'STOP:execute stop action without stopping'
+	'START:execute start action without starting'
+	'STATUS:execute status action also for non-running scripts'
 	'zap:zap squash_dir to stopped state'
 	)
 	_describe -t commands 'command' cmds

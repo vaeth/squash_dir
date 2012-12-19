@@ -46,10 +46,18 @@ Die() {
 
 Usage() {
 	Echo \
-"Usage: ${0##*/} [option] status|restart|start|stop|STOP|zap [masks]
-Show the status of all squash_* initscripts or (re)start|stop them.
-If [masks] are given only the squash_[masks] initscripts are considered;
+"Usage: ${0##*/} [option] command [masks]
+Show the status of all squash_* initscripts or (re)start|stop them:
+command is one of
+	status restart start stop zap STATUS RESTART START STOP
+
+The commands STATUS/RESTART/START/STOP are like status/restart/start/stop
+but do not check/change the \"running\" state of the script:
+Use these only if you know what you are doing.
+
+If [masks] are given, only the squash_[masks] initscripts are considered;
 an empty [masks] is equivalent to '*'.
+
 Options:
 -s  Squash data on stop/restart even if THRESHOLD is not reached.
     This is done by temporarily creating \$IGNORE_THRESHOLD
@@ -83,7 +91,7 @@ Instead of \"status\" you can also say \"show\", \"print\", \"info\", \"list\".
 All these can be abbreviated by their first letters until unique,
 e.g. \"sh\" or \"sho\" instead of \"show\" or \"z\" instead of \"zap\".
 
-Use STOP with extreme care, especially if combined with -s -n -k:
+Use STOP with extreme care, especially if combined with -s -n or -k:
 This combination should not be used if some non-running script from
 squash_[masks] uses the temporary name feature in \$DIR_CHANGE, more precisely,
 in the path of \$IGNORE_THRESHOLD, \$MAGIC_FILE, or \$KILL_FILE respectively."
@@ -139,36 +147,49 @@ PrintAction() {
 }
 
 PrintNoSave() {
-	PrintAction 'stop'
+	PrintAction "${3:-stop}"
 	${1} || need_result=`"${2}" -q need_squash 2>&1`
 	case ${need_result} in
-	0)	PrintComment 'is unmodified';;
-	1)	nosave=:
+	0)
+		PrintComment 'is unmodified';;
+	1)
+		nosave=:
 		PrintComment 'will not re-squash changes';;
-	*)	PrintComment "error: ${a}";;
+	*)
+		PrintComment "error: ${a}";;
 	esac
 }
 
 StatusRestart() {
 	statusres=`"${1}" -q have_kill 2>&1`
 	case ${statusres} in
-	0)	PrintAction 'restart' 'changes will be re-squashed';;
-	1)	PrintAction 'restart' 'changes will be deleted';;
-	*)	Error "error: ${statusres}"; return 1;;
+	0)
+		PrintAction "${2:-restart}" 'changes will be re-squashed';;
+	1)
+		PrintAction "${2:-restart}" 'changes will be deleted';;
+	*)
+		Error "error: ${statusres}"
+		return 1;;
 	esac
 	return 0
 }
 
 Status() {
+	statusarg=${1}
+	shift
 	PrintInit "${1}"
-	if ! "${1}" -q status
-	then	PrintAction 'start' 'initscript was not started'
-		return 0
+	statusmsg=
+	if ! "${1}" -q status >/dev/null 2>&1
+	then	if [ "${statusarg}" = 'status' ]
+		then	PrintAction 'start' 'initscript was not started'
+			return 0
+		fi
+		statusmsg=:
 	fi
 	statusres=`"${1}" -q will_squash 2>&1`
 	case ${statusres} in
-	0)	PrintNoSave false "${1}";;
-	1)	StatusRestart "${1}" || return 1;;
+	0)	PrintNoSave false "${1}" ${statusmsg:+STOP};;
+	1)	StatusRestart "${1}" ${statusmsg:+RESTART} || return 1;;
 	*)	Error "error: ${statusres}"; return 1;;
 	esac
 	return 0
@@ -278,7 +299,7 @@ CheckStop() {
 }
 
 CheckRunning() {
-	if "${1}" -q status
+	if "${1}" -q status >/dev/null 2>&1
 	then	if ! ${2:-:}
 		then	${3:-Echo} "${1} was already started"
 			return 1
@@ -293,7 +314,7 @@ Stop() {
 	stoparg=${1}
 	shift
 	case ${stoparg} in
-	STOP)
+	STOP|RESTART)
 		is_running=false
 		if ${force}
 		then	CheckRunning "${1}" false : || is_running=:
@@ -305,7 +326,7 @@ Stop() {
 	esac
 	filetext=${1#*squash_}
 	case ${stoparg} in
-	rest*)
+	restart)
 		CheckStop "${1}" || return
 		if ${will_restart}
 		then	TitleInfo "restart ${filetext}"
@@ -314,7 +335,7 @@ Stop() {
 		else	PrintInit "${1}"
 			PrintNoSave ${checked_need} "${1}"
 		fi;;
-	stop|STOP)
+	stop|STOP|RESTART)
 		CheckStop "${1}" || return
 		if [ "${stoparg}" = 'stop' ]
 		then	TitleInfo "stop ${filetext}"
@@ -327,11 +348,26 @@ Stop() {
 		fi
 		"${1}" ${stoparg}
 		stopret=${?}
-		RemoveTemp && return ${stopret};;
+		RemoveTemp
+		if [ "${stoparg}" = 'RESTART' ] && [ ${stopret} -eq 0 ]
+		then	START "${1}"
+		fi
+		return ${stopret};;
 	zap)
 		Echo "Zapping ${filetext}"
 		"${1}" zap;;
 	esac
+}
+
+START() {
+	filetext=${1#*squash_}
+	if CheckRunning "${1}" false :
+	then	TitleInfo "START-action of running ${filetext}"
+		Echo "START-action of running ${filetext}"
+	else	TitleInfo "START non-running ${filetext}"
+		Echo "STARTING non-running ${filetext}"
+	fi
+	"${1}" START
 }
 
 Start() {
@@ -428,17 +464,23 @@ opt=${1}
 [ ${#} -ne 0 ] || set -- '*'
 case ${opt} in
 stat*|sh*|[lpi]*)
-	Doall Status "${@}";;
+	Doall -status Status "${@}";;
+STAT*)
+	Doall -STATUS Status "${@}";;
+R*)
+	Doall -RESTART Stop "${@}";;
 re*)
 	Doall -restart Stop "${@}";;
 sto*)
 	Doall -stop Stop "${@}";;
-S*)
+STO*)
 	Doall -STOP Stop "${@}";;
 z*)
 	Doall -zap Stop "${@}";;
 star*)
 	Doall Start "${@}";;
+STAR*)
+	Doall START "${@}";;
 *)
 	Usage;;
 esac

@@ -1,5 +1,9 @@
 # ChangeLog for squash_dir
 
+*squash_dir-12.6
+	Martin Väth <martin at mvath.de>:
+	- Add START command. Also add RESTART and STATUS to squash_dir.
+
 *squash_dir-12.5
 	Martin Väth <martin at mvath.de>:
 	- Support RUNPATH

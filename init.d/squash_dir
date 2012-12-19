@@ -7,11 +7,12 @@ depend() {
 
 description='Mount a squashed directory in a writable manner'
 
-extra_commands='STOP will_squash need_squash have_magic have_kill'
+extra_commands='START STOP will_squash need_squash have_magic have_kill'
 extra_commands=${extra_commands}' print_dir_change print_dir_squash'
 extra_commands=${extra_commands}' print_ignore_threshold print_magic_file'
 extra_commands=${extra_commands}' print_kill_file'
 
+description_START='Execute actions of start without actually starting. Dangerous!'
 description_STOP='Execute actions of stop without actually stopping. Dangerous!'
 description_will_squash='print 1 to stderr if stop operation would re-squash'
 description_need_squash='print 1 to stderr if new data was written'
@@ -428,7 +429,7 @@ Mksquash() {
 	fi
 }
 
-start() {
+START() {
 	Check start || return
 	Mksquash || return
 	ebegin "Mounting ${FILE_SQFS} as ${DIRECTORY}"
@@ -447,6 +448,10 @@ start() {
 		rmdir -- "${mount_squash}"
 	fi
 	eend ${startstat}
+}
+
+start() {
+	START
 }
 
 MvTbzOld() {
