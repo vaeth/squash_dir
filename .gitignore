@@ -3,6 +3,7 @@
 /autom4te.cache/
 /config/
 /m4/
+/squash_dir-*/
 
 # autotools/doxygen files:
 /ABOUT-NLS

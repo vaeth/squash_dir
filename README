@@ -89,6 +89,9 @@ DIR_SQUASH="${DIRECTORY}.readonly"
 COMPRESSION="lzo"
 THRESHOLD=1000
 
+Optionally, you can also modify global defaults in /etc/conf.d/squash_dir;
+see the comments in the same conf.d/squash_dir file for details
+
 The meaning of this configuration data is the following:
 The first line determines the directory you want to keep compressed and
 be writable; the corresponding compressed data will be expected/created
@@ -239,6 +242,10 @@ command line interface).
 
 STOP:        Executes the actions of "stop" without actually stopping.
              Moreover, this can be called even if the script was not started.
+             Use this only in case of fatal problems and with extreme care!
+START:       Execute the actions of "start" without actually starting.
+             For instance, it is not required that dependencies are started.
+             Moreover, this can be called even if the script was started.
              Use this only in case of fatal problems and with extreme care!
 will_squash: returns true/false (and a corresponding message unless -q is
              used) depending on whether the stop operation would re-squash

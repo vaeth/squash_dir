@@ -22,7 +22,8 @@ which will let squash_dir display that progress bar.
 ======================
 
 Call as root
-	cp -p init.d/squash_dir /etc/init.d/squash_dir
+	cp -p init.d/squash_dir /etc/init.d
+	cp -p conf.d/squash_dir /etc/conf.d
 	cp -p sbin/squash_dir /usr/sbin
 	cp -p zsh/_squash_dir /usr/share/zsh/site-functions
 

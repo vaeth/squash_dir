@@ -1,6 +1,6 @@
 # (C) Martin V\"ath <martin@mvath.de>
 
-AC_INIT([squash_dir], [12.6])
+AC_INIT([squash_dir], [12.7])
 AC_PREREQ([2.64])
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_FILES([Makefile])
@@ -65,6 +65,15 @@ AS_IF([diff init.d/squash_dir patching.tmp],
 	AS_IF([cat patching.tmp >|init.d/squash_dir],
 		[],
 		[AC_MSG_ERROR(["cannot patch init.d/squash_dir"])])])
+AS_IF([["${SED}" -e "s/ORDER-[-a-z ]*/ORDER-${order}/" conf.d/squash_dir >|patching.tmp]],
+	[],
+	[AC_MSG_ERROR(["sed for conf.d/squash_dir failed"])])
+AS_IF([diff conf.d/squash_dir patching.tmp],
+	[],
+	[AC_MSG_NOTICE([patching conf.d/squash_dir])
+	AS_IF([cat patching.tmp >|conf.d/squash_dir],
+		[],
+		[AC_MSG_ERROR(["cannot patch conf.d/squash_dir"])])])
 AS_IF([rm patching.tmp],
 	[],
 	[AC_MSG_ERROR(["cannot remove temporary file ./patching.tmp"])])

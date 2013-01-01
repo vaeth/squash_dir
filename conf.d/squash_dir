@@ -1,0 +1,11 @@
+# This file sets defaults for all /etc/conf.d/squash_* data.
+# Depending on the openrc version, this is usually evaluated after above files.
+# So make sure to not override variables already set in the above files.
+# This file might also be used to patch functions from /etc/init.d/squash_dir
+# (use this only if you know what you are doing!).
+
+# Define the ORDER default:
+: ${ORDER=aufs overlayfs unionfs-fuse funionfs unionfs}
+
+# Do not store extended attributes unless overridden in /etc/conf.d/squash_*:
+: ${MKSQUASHFS=-no-xattrs}

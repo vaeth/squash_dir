@@ -23,6 +23,9 @@ pkgdatadir=$(sysconfdir)
 nobase_dist_pkgdata_SCRIPTS = \
 init.d/squash_dir
 
+nobase_dist_sysconf_DATA = \
+conf.d/squash_dir
+
 dist_sbin_SCRIPTS = \
 sbin/squash_dir
 

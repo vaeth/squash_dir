@@ -1,5 +1,11 @@
 # ChangeLog for squash_dir
 
+*squash_dir-12.7
+	Martin Väth <martin at mvath.de>:
+	- Support global /etc/conf.d/squash_dir and provide default
+	- Clear DIR_CHANGE even if THRESHOLD is not reached but no
+	  essential change was made.
+
 *squash_dir-12.6
 	Martin Väth <martin at mvath.de>:
 	- Add START command. Also add RESTART and STATUS to squash_dir.

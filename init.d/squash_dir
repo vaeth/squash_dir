@@ -638,11 +638,11 @@ Store() {
 	else	will_kill=false
 	fi
 	HaveMagic && return
-	ExceedThreshold || return 0
 	if ! NeedSquash
 	then	will_kill=keep
 		return 0
 	fi
+	ExceedThreshold || return 0
 	Normalize FILE_SQFS_OLD FILE_TBZ FILE_TBZ_OLD
 	ebegin "Squashing ${DIRECTORY} to ${FILE_SQFS}"
 	einfo "(this may take a while)"
@@ -839,3 +839,7 @@ print_dir_squash() {
 	printf '%s/' "${DIR_SQUASH}" >&2
 	return 0
 }
+
+test -r '/etc/conf.d/squash_dir' && \
+	. '/etc/conf.d/squash_dir'
+:
