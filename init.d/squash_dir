@@ -7,13 +7,15 @@ depend() {
 
 description='Mount a squashed directory in a writable manner'
 
-extra_commands='START STOP will_squash need_squash have_magic have_kill'
+extra_commands='START STOP RESTART'
+extra_commands=${extra_commands}' will_squash need_squash have_magic have_kill'
 extra_commands=${extra_commands}' print_dir_change print_dir_squash'
 extra_commands=${extra_commands}' print_ignore_threshold print_magic_file'
 extra_commands=${extra_commands}' print_kill_file'
 
 description_START='Execute actions of start without actually starting. Dangerous!'
 description_STOP='Execute actions of stop without actually stopping. Dangerous!'
+description_RESTART='Execute STOP && START without actually restarting. Dangerous!'
 description_will_squash='print 1 to stderr if stop operation would re-squash'
 description_need_squash='print 1 to stderr if new data was written'
 description_have_magic='print 1 to stderr if $MAGIC_FILE exists'
@@ -247,8 +249,8 @@ CreateFirstTime() {
 		return 2
 	}
 	einfo "Squashing ${DIRECTORY} to ${FILE_SQFS}"
-	mksquashfs ${COMPRESSION:+-comp "${COMPRESSION}"} ${MKSQUASHFS} \
-		"${DIRECTORY}" "${FILE_SQFS}" || {
+	mksquashfs "${DIRECTORY}" "${FILE_SQFS}" \
+		${COMPRESSION:+-comp "${COMPRESSION}"} ${MKSQUASHFS} || {
 		Error ${?} "mksquashfs failed. Exiting."
 		return
 	}
@@ -733,6 +735,10 @@ STOP() {
 
 stop() {
 	STOP
+}
+
+RESTART() {
+	STOP && START
 }
 
 will_squash() {

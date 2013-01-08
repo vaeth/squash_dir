@@ -50,7 +50,7 @@ ${quiet} && quietredirect='>/dev/null 2>&1' || quietredirect=
 
 if ${use_chown}
 then	ls /root >/dev/null 2>&1 && \
-		Die "You should not really be root when you use -r" 2
+		Die "you should not really be root when you use -r" 2
 	chown -R root:root .
 fi
 
@@ -59,13 +59,13 @@ then	if ! test -e configure || ! test -e Makefile.in
 	then	Info "Running autotools..."
 		eval "./autogen.sh -Werror ${quietredirect}" || Die "autogen failed"
 	fi
-	Info "Running configure" ${configure_extra}
+	Info "Running ./configure" ${configure_extra}
 	eval "./configure ${configure_extra} ${quietredirect}" || \
-		Die "configure failed"
+		Die 'configure failed'
 fi
 ${earlystop} && exit
 Info "Making ${*}..."
-command -v make >/dev/null 2>&1 || Die "cannot find make"
+command -v make >/dev/null 2>&1 || Die 'cannot find make'
 if ${quiet}
 then	exec make ${jarg} "${@}" >/dev/null
 else	exec make ${jarg} "${@}"

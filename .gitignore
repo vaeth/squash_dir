@@ -1,5 +1,6 @@
+
 # autotools directories:
-/tmp*
+/tmp*/
 /autom4te.cache/
 /config/
 /m4/
@@ -16,6 +17,7 @@
 /conftest*
 /doxygen.cfg
 /stamp-h1
+/a.out
 
 # temporary files:
 /patching.tmp

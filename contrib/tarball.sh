@@ -1,10 +1,10 @@
 #! /usr/bin/env sh
 
-project="squash_dir"
-mkclean="./mk/clean"
-mkemerge="./mk/emerge"
-mkrelease="./mk/release"
-mkmake="./mk/make"
+project='squash_dir'
+mkclean='contrib/clean.sh'
+mkemerge='contrib/emerge.sh'
+mkrelease='contrib/release.sh'
+mkmake='contrib/make.sh'
 mkmakeextra=
 make_opts='-q'
 
