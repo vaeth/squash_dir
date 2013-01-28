@@ -1,7 +1,7 @@
 #compdef squash_dir
-local context state state_descr line
+local curcontext="$curcontext" state state_descr line
 typeset -A opt_args
-_arguments -s -S -A '-*' : \
+_arguments -C -s -S -A '-*' : \
 '-s[squash always\: create temporarily $DIR_CHANGE/.do-save]' \
 '-n[no squashing\:  create temporarily $DIR_CHANGE/.no-save]' \
 '-k[kill changes\:  create temporarily $DIR_CHANGE/.No-save]' \
