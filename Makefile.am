@@ -4,7 +4,7 @@ AUTOMAKE_OPTIONS = foreign 1.10 no-dist-gzip dist-bzip2 -Wobsolete -Wportability
 
 EXTRA_DIST = \
 .gitignore \
-mk \
+contrib \
 autogen.sh \
 INSTALL \
 zsh/_squash_dir

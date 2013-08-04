@@ -3,4 +3,4 @@
 export LC_ALL=C
 umask 022
 
-exec mk/make maintainer-clean
+exec contrib/make.sh maintainer-clean

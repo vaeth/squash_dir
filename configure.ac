@@ -23,7 +23,7 @@ AS_VAR_IF([ZSH_COMPLETION], [],
 AC_SUBST([ZSH_COMPLETION])
 
 AC_MSG_CHECKING([for ORDER default])
-AS_VAR_SET([order], ["aufs overlayfs unionfs-fuse funionfs unionfs"])
+AS_VAR_SET([order], ["overlayfs aufs unionfs-fuse funionfs unionfs"])
 AC_ARG_WITH([first-order],
 	[AS_HELP_STRING([--with-first-order=STR],
 		[use STR as first entry in ORDER default])],
@@ -65,7 +65,7 @@ AS_IF([diff init.d/squash_dir patching.tmp],
 	AS_IF([cat patching.tmp >|init.d/squash_dir],
 		[],
 		[AC_MSG_ERROR(["cannot patch init.d/squash_dir"])])])
-AS_IF([["${SED}" -e "s/ORDER-[-a-z ]*/ORDER-${order}/" conf.d/squash_dir >|patching.tmp]],
+AS_IF([["${SED}" -e "s/ORDER=[-a-z ]*/ORDER=${order}/" conf.d/squash_dir >|patching.tmp]],
 	[],
 	[AC_MSG_ERROR(["sed for conf.d/squash_dir failed"])])
 AS_IF([diff conf.d/squash_dir patching.tmp],

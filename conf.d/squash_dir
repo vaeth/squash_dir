@@ -5,7 +5,7 @@
 # (use this only if you know what you are doing!).
 
 # Define the ORDER default:
-: ${ORDER=aufs overlayfs unionfs-fuse funionfs unionfs}
+: ${ORDER=overlayfs aufs unionfs-fuse funionfs unionfs}
 
 # Do not store extended attributes unless overridden in /etc/conf.d/squash_*:
 : ${MKSQUASHFS=-no-xattrs}

@@ -1,5 +1,12 @@
 # ChangeLog for squash_dir
 
+*squash_dir-12.10
+	Martin Väth <martin at mvath.de>:
+	- Let --with{,-first}-order patch conf.d/squash_dir correctly
+	- Yet another change of default ORDER: overlayfs is first, as it
+	  finally seems to be included into linux-3.11
+	- Improve contrib files
+
 *squash_dir-12.9
 	Martin Väth <martin at mvath.de>:
 	- Fix zsh completion: Treat context properly

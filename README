@@ -9,9 +9,9 @@ This is essentially an initscript for Gentoo or openrc which allows to keep a
 directory compressed by squashfs but simultaneously allows to write on it
 using some of (depending on the configuration and what is available):
 
-	aufs, see http://aufs.sourceforge.net
 	overlayfs, see
 		http://git.kernel.org/?p=linux/kernel/git/mszeredi/vfs.git
+	aufs, see http://aufs.sourceforge.net
 	unionfs-fuse, see http://podgorny.cz/moin/UnionFsFuse
 		(unionfs-fuse-0.25 or newer is required)
 	unionfs, see http://www.fsl.cs.sunysb.edu/project-unionfs.html
@@ -100,7 +100,7 @@ Moreover, later, there will be auxiliary directories ${DIRECTORY}.changes
 and ${DIRECTORIES}.readonly available. The latter is the content of
 the compressed data without any modifications (this directory is readonly),
 and the former contains the modified files (and some metadata, depending
-on which of aufs|overlayfs|unionfs-fuse|unionfs|funionfs you are using).
+on which of overlayfs|aufs|unionfs-fuse|unionfs|funionfs you are using).
 The THRESHOLD value means that your changes will not be compressed on every
 shutdown but only if ${DIRECTORY}.changes gets large enough.
 Moreover, the IGNORETOUCH-value in squash_tex means that changes only in
@@ -541,7 +541,7 @@ ORDER
 	If the variable DIR_CHANGE is empty, this variable is ignored.
 	Otherwise, its value should be a string consisting of
 	all (or some) of the words
-		aufs overlayfs unionfs-fuse funionfs unionfs  (*)
+		overlayfs aufs unionfs-fuse funionfs unionfs  (*)
 	Then the corresponding tool is used to make DIRECTORY writable.
 	The tools are attempted in the given order: If the first tool
 	fails, a warning message is printed, and the next tool is
