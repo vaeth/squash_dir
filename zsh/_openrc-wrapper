@@ -1,0 +1,5 @@
+#compdef openrc-wrapper
+_arguments : \
+'-q[quiet\: Suppress standard output]' \
+'1:inits:compadd -- /etc/init.d/*(:t)' \
+'2:cmds:(restart start stop)'

@@ -5,9 +5,10 @@ The license of this package is the GNU Public License GPL-2.
 What is this project?
 =====================
 
-This is essentially an initscript for Gentoo or openrc which allows to keep a
-directory compressed by squashfs but simultaneously allows to write on it
-using some of (depending on the configuration and what is available):
+This is essentially an initscript for openrc and/or systemd which
+allows to keep a directory compressed by squashfs but simultaneously allows
+to write on it using some of (depending on the configuration and what is
+available):
 
 	overlayfs, see
 		http://git.kernel.org/?p=linux/kernel/git/mszeredi/vfs.git
@@ -28,6 +29,14 @@ If the Gentoo portage tree /usr/portage is compressed this way
 the required disk space is only about 50 MB (instead of about 180 MB,
 the actual space requirement depending essentially on the filesystem),
 and usually the access is even faster.
+
+In addition, this project contains an openrc-wrapper script which can be used
+to use simple initscript of openrc even if openrc is not running:
+In particular, these scripts can then be used with systemd (and also this
+script is sometimes handy from the command line for administratice purposes).
+If the initscripts are simple enough, openrc need not even be installed for
+the openrc-wrapper to work: For this reason, this project will also work
+with *only* systemd, although natively it is meant for openrc.
 
 
 Requirements
@@ -122,10 +131,14 @@ Of course, you should make sure that the squashfs in your kernel supports
 the corresponding algorithms.
 
 Now to actually make these settings active start the initscripts.
-You can do this manually in the classical way using
+You can do this manually in the classical way using (in case of openrc)
 	/etc/init.d/squash_portage start
 	/etc/init.d/squash_tex start
 	/etc/init.d/squash_db start
+or using (in case of systemd)
+	systemctl start squash_dir@portage.service
+	systemctl start squash_dir@tex.service
+	systemctl start squash_dir@db.service
 or in a more convenient way using the /usr/sbin/squash_dir
 command line interface to start them all with only one command:
 	squash_dir start
@@ -156,10 +169,12 @@ mksquashfs), you can start the initscript safely,
 i.e. in this case $DIRECTORY will not get cleaned automatically.
 
 In order to start the initscripts also on the next boot, add them
-to your default runlevel
+to your default runlevel (if you use openrc):
 	rc-config add squash_portage default
 	rc-config add squash_tex default
 	rc-config add squash_db default
+If you use systemd, to start all configured scripts at once on system start:
+	systemctl enable squash_dir
 
 When you shutdown the computer (more precisely: When the above initscripts
 are stopped) any modifications to the directories are recompressed
@@ -169,10 +184,14 @@ are stopped) any modifications to the directories are recompressed
 In some situations you might want to recompress the directories even
 before you shutdown the system (or perhaps even if the THRESHOLD is not
 yet reached or no serious modifications were done).
-In this case you can call e.g.
+In this case you can call e.g. (in openrc)
 	/etc/init.d/squash_portage restart
 	/etc/init.d/squash_tex restart
 	/etc/init.d/squash_db restart
+or (in systemd)
+	systemctl restart squash_dir@portage.service
+	systemctl restart squash_dir@tex.service
+	systemctl restart squash_dir@db.service
 or you can use the /usr/sbin/squash_dir" command line interface with
 corresponding parameters to execute (some or all) of these commands in a row
 (calling the interface without parameters shows the options; the interface

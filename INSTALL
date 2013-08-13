@@ -3,9 +3,7 @@ There are essentially three possibilities to install the package:
 1. Installation by portage (recommended)
 ========================================
 
-If you are a Gentoo user (which you probably are if your are using openrc
-which is required for this project)
-you can just copy the tarball to your $DISTDIR
+If you are a Gentoo user you can just copy the tarball to your $DISTDIR
 (by default /usr/portage/distfiles, but probably you will want to change
 this anyway if you will use this package)
 and then use the sys-fs/squash_dir ebuild of the mv overlay to install
@@ -21,11 +19,12 @@ which will let squash_dir display that progress bar.
 2. Manual installation
 ======================
 
-Call as root
+Call as root (after creating the corresponding directories if necessary):
 	cp -p init.d/squash_dir /etc/init.d
 	cp -p conf.d/squash_dir /etc/conf.d
-	cp -p sbin/squash_dir /usr/sbin
-	cp -p zsh/_squash_dir /usr/share/zsh/site-functions
+	cp -p sbin/* /usr/sbin
+	cp -p systemd/* /usr/lib/systemd/system
+	cp -p zsh/* /usr/share/zsh/site-functions
 
 Here you can find the patches which redirect the progress bar of
 mksquashfs to stderr:

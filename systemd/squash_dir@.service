@@ -1,0 +1,13 @@
+[Unit]
+Description=Mount %i with squash_dir
+ConditionPathExists=/etc/conf.d/squash_%i
+ConditionPathIsSymbolicLink=/etc/init.d/squash_%i
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+ExecStart=/usr/sbin/openrc-wrapper squash_%i start
+ExecStop=/usr/sbin/openrc-wrapper squash_%i stop
+
+[Install]
+WantedBy=multi-user.target

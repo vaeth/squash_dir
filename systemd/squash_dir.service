@@ -1,0 +1,9 @@
+[Unit]
+Description=Start all squash_dir services
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/squash_dir start
+
+[Install]
+WantedBy=multi-user.target

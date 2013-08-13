@@ -1,0 +1,97 @@
+#! /bin/sh
+Echo() {
+	printf '%s\n' "${@}"
+}
+Usage() {
+	Echo "Usage: ${0##*/} SCRIPT [-q] argument
+Execute /etc/init.d/SCRIPT [-q] argument, somewhat emulating the
+behaviour of openrc but not requiring openrc to be running/installed."
+	exit ${1:-1}
+}
+[ ${#} -gt 1 ] || Usage
+SVCNAME=${1}
+test -r "/etc/init.d/${SVCNAME}" || Usage 127
+shift
+if [ "${1}" = '-q' ]
+then	[ ${#} -eq 2 ] || Usage
+	shift
+	exec >/dev/null
+else	[ ${#} -eq 1 ] || Usage
+fi
+PATH='/lib/rc/bin:'${PATH:-/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/bin}
+if ! command -v ebegin >/dev/null 2>&1
+then
+ebegin() {
+einfon "${@}"
+}
+eend() {
+echo
+}
+einfo() {
+Echo "${@}"
+}
+einfon() {
+printf '%s' "${*}"
+}
+ewarn() {
+Echo "${@}" >&2
+}
+ewarnn() {
+Echo "${@}" >&2
+}
+ewend() {
+eend >&2
+}
+eerror() {
+ewarn "${@}"
+}
+eerrorn() {
+ewarnn "${@}"
+}
+vebegin() {
+ebegin "${@}"
+}
+veend() {
+eend "${@}"
+}
+veinfo() {
+einfo "${@}"
+}
+vewarn() {
+ewarn "${@}"
+}
+vewend() {
+ewend "${@}"
+}
+veindent() {
+:
+}
+veoutdent() {
+:
+}
+eindent() {
+:
+}
+eoutdent() {
+:
+}
+fi
+if test -r "/etc/conf.d/${SVCNAME}"
+then	. "/etc/conf.d/${SVCNAME}"
+fi
+. "/etc/init.d/${SVCNAME}"
+if [ "${1}" = restart ]
+then	stop
+	start
+	exit
+fi
+for wrapper_i in start stop \
+	${extra_commands} \
+	${extra_started_commands} \
+	${extra_stopped_commands}
+do	[ "${1}" ] && {
+	"${1}"
+	exit
+}
+done
+exit 1

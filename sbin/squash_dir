@@ -1,6 +1,9 @@
 #! /usr/bin/env sh
 # (C) Martin V\"ath <martin@mvath.de>
 
+[ -n "${PATH}" ] || PATH='/usr/local/bin:/usr/local/sbin:/usr/bin:/bin:/opt/bin'
+PATH=${PATH}':/usr/sbin:/sbin'
+
 Echo() {
 	printf '%s\n' "${*}"
 }
@@ -131,9 +134,48 @@ case ${titleopt} in
 	Usage;;
 esac
 
+if ps -p 1 | grep systemd >/dev/null 2>&1
+then
+CallStatus() {
+	systemctl --quiet is-active "squash_dir@${1#*squash_}.service" >/dev/null 2>&1
+}
+CallOther() {
+	callother=${1#*squash_}
+	shift
+	openrc-wrapper "squash_${callother}" "${@}"
+}
+CallStart() {
+	case ${2} in
+	start|stop|restart)
+		systemctl ${2} "squash_dir@${1#*squash_}.service";;
+	START|STOP|RESTART)
+		CallOther "${@}";;
+	*)
+		Error "${2} not available with systemd"
+		Exit 1;;
+	esac
+}
+PrintInit() {
+	max_len=$(( ${max_len} - 17 ))
+	PrintInit() {
+	printf "%-${max_len:-40}s " ": ${1#*squash_}"
+}
+	PrintInit "${@}"
+}
+else
+CallStatus() {
+	"${1}" -q status >/dev/null 2>&1
+}
+CallOther() {
+	"${@}"
+}
+CallStart() {
+	"${@}"
+}
 PrintInit() {
 	printf "%-${max_len:-40}s " "${*}"
 }
+fi
 
 PrintComment() {
 	Echo "# ${*}"
@@ -148,7 +190,7 @@ PrintAction() {
 
 PrintNoSave() {
 	PrintAction "${3:-stop}"
-	${1} || need_result=`"${2}" -q need_squash 2>&1`
+	${1} || need_result=`CallOther "${2}" -q need_squash 2>&1`
 	case ${need_result} in
 	0)
 		PrintComment 'is unmodified';;
@@ -161,7 +203,7 @@ PrintNoSave() {
 }
 
 StatusRestart() {
-	statusres=`"${1}" -q have_kill 2>&1`
+	statusres=`CallOther "${1}" -q have_kill 2>&1`
 	case ${statusres} in
 	0)
 		PrintAction "${2:-restart}" 'changes will be re-squashed';;
@@ -179,14 +221,14 @@ Status() {
 	shift
 	PrintInit "${1}"
 	statusmsg=
-	if ! "${1}" -q status >/dev/null 2>&1
+	if ! CallStatus "${1}"
 	then	if [ "${statusarg}" = 'status' ]
 		then	PrintAction 'start' 'initscript was not started'
 			return 0
 		fi
 		statusmsg=:
 	fi
-	statusres=`"${1}" -q will_squash 2>&1`
+	statusres=`CallOther "${1}" -q will_squash 2>&1`
 	case ${statusres} in
 	0)	PrintNoSave false "${1}" ${statusmsg:+STOP};;
 	1)	StatusRestart "${1}" ${statusmsg:+RESTART} || return 1;;
@@ -263,7 +305,7 @@ CheckStop() {
 	then	CreateKillfile "${1}"
 		return
 	fi
-	checkstopres=`"${1}" -q will_squash 2>&1`
+	checkstopres=`CallOther "${1}" -q will_squash 2>&1`
 	case ${checkstopres} in
 	0)
 		:;;
@@ -284,7 +326,7 @@ CheckStop() {
 		return
 	fi
 	checked_need=:
-	need_result=`"${1}" -q need_squash 2>&1`
+	need_result=`CallOther "${1}" -q need_squash 2>&1`
 	case ${need_result} in
 	0)
 		will_restart=false
@@ -299,7 +341,7 @@ CheckStop() {
 }
 
 CheckRunning() {
-	if "${1}" -q status >/dev/null 2>&1
+	if CallStatus "${1}"
 	then	if ! ${2:-:}
 		then	${3:-Echo} "${1} was already started"
 			return 1
@@ -331,7 +373,7 @@ Stop() {
 		if ${will_restart}
 		then	TitleInfo "restart ${filetext}"
 			Echo "Restarting ${filetext}..."
-			"${1}" restart && RemoveTemp
+			CallStart "${1}" restart && RemoveTemp
 		else	PrintInit "${1}"
 			PrintNoSave ${checked_need} "${1}"
 		fi;;
@@ -346,7 +388,7 @@ Stop() {
 		else	TitleInfo "STOP non-running ${filetext}"
 			Echo "STOPPING non-running ${filetext}"
 		fi
-		"${1}" ${stoparg}
+		CallStart "${1}" ${stoparg}
 		stopret=${?}
 		RemoveTemp
 		if [ "${stoparg}" = 'RESTART' ] && [ ${stopret} -eq 0 ]
@@ -355,7 +397,7 @@ Stop() {
 		return ${stopret};;
 	zap)
 		Echo "Zapping ${filetext}"
-		"${1}" zap;;
+		CallStart "${1}" zap;;
 	esac
 }
 
@@ -367,7 +409,7 @@ START() {
 	else	TitleInfo "START non-running ${filetext}"
 		Echo "STARTING non-running ${filetext}"
 	fi
-	"${1}" START
+	CallStart "${1}" START
 }
 
 Start() {
@@ -375,7 +417,7 @@ Start() {
 	filetext=${1#*squash_}
 	TitleInfo "start ${filetext}"
 	Echo "Starting ${filetext}..."
-	"${1}" start
+	CallStart "${1}" start
 }
 
 Matchingji() {

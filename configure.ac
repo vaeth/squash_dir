@@ -1,6 +1,6 @@
 # (C) Martin V\"ath <martin@mvath.de>
 
-AC_INIT([squash_dir], [12.10])
+AC_INIT([squash_dir], [13.0])
 AC_PREREQ([2.64])
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_FILES([Makefile])
@@ -21,6 +21,19 @@ AS_VAR_IF([ZSH_COMPLETION], [],
 		[AC_MSG_RESULT([no])],
 		[AC_MSG_RESULT([yes, into ${ZSH_COMPLETION}])])
 AC_SUBST([ZSH_COMPLETION])
+
+AC_MSG_CHECKING([systemd system units])
+AS_VAR_SET([SYSTEMSYSTEMUNITDIR], ["${libdir}/systemd/system"])
+AC_ARG_WITH([systemdsystemunitdir],
+	[AS_HELP_STRING([--with-systemdsystemunitdir=STR],
+		[install systemd unit files in directory STR])],
+	[AS_CASE([${withval}],
+		[/*], [AS_VAR_COPY([SYSTEMSYSTEMUNITDIR], [withval])],
+		[no], [AS_VAR_SET([SYSTEMSYSTEMUNITDIR], [])])])
+AS_VAR_IF([SYSTEMSYSTEMUNITDIR], [],
+		[AC_MSG_RESULT([no])],
+		[AC_MSG_RESULT([yes, into ${SYSTEMSYSTEMUNITDIR}])])
+AC_SUBST([SYSTEMSYSTEMUNITDIR])
 
 AC_MSG_CHECKING([for ORDER default])
 AS_VAR_SET([order], ["overlayfs aufs unionfs-fuse funionfs unionfs"])

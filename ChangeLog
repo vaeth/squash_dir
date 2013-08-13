@@ -1,5 +1,9 @@
 # ChangeLog for squash_dir
 
+*squash_dir-13.0
+	Martin Väth <martin at mvath.de>:
+	- Add optional support for systemd
+
 *squash_dir-12.10
 	Martin Väth <martin at mvath.de>:
 	- Let --with{,-first}-order patch conf.d/squash_dir correctly
