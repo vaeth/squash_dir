@@ -89,6 +89,12 @@ DIRECTORY="/usr/share/texmf-dist"
 DIR_CHANGE="${DIRECTORY}.changes"
 DIR_SQUASH="${DIRECTORY}.readonly"
 IGNORETOUCH="ls-R"
+IGNORETOUCH=${IGNORETOUCH}"|tex"
+IGNORETOUCH=${IGNORETOUCH}"|tex/generic"
+IGNORETOUCH=${IGNORETOUCH}"|tex/generic/config"
+IGNORETOUCH=${IGNORETOUCH}"|tex/generic/config/language.dat"
+IGNORETOUCH=${IGNORETOUCH}"|tex/generic/config/language.dat.lua"
+IGNORETOUCH=${IGNORETOUCH}"|tex/generic/config/language.def"
 
 /etc/conf.d/squash_db:
 DIRECTORY="/var/db"
@@ -113,10 +119,11 @@ on which of overlayfs|aufs|unionfs-fuse|unionfs|funionfs you are using).
 The THRESHOLD value means that your changes will not be compressed on every
 shutdown but only if ${DIRECTORY}.changes gets large enough.
 Moreover, the IGNORETOUCH-value in squash_tex means that changes only in
-the date of the file /usr/share/texmf-dist/ls-R should not cause a
-recompression on shutdown (this file is usually often recreated with the
-same content, and so if nothing else happens, it is reasonable to ignore
-this change).
+the date of the file /usr/share/texmf-dist/ls-R or
+/usr/share/texmf-dist/generic/config/language.{dat{,.lua},def}
+should not cause a recompression on shutdown
+(these files are usually often recreated with the same content,
+and so if nothing else happens, it is reasonable to ignore this change).
 The FILE_SQFS_OLD value in /etc/conf.d/squash_db means that a
 backup should always be kept of the previous compressed data for /var/db;
 this is for security reasons, since that directory is rather vital to
@@ -532,11 +539,21 @@ IGNORETOUCH
 	use file globbing and | to separate alternatives and have to
 	quote | or ) if you use it as symbols. Note that no pruning of
 	directories is done, i.e. with each directory also its whole content
-	is checked; directories are by definition always equal.
-	Typical example: IGNORETOUCH='ls-R'
+	is checked against IGNORETOUCH; directories are by definition
+	always equal if they existed before.
+	Typical example:
+		IGNORETOUCH="ls-R"
+		IGNORETOUCH=${IGNORETOUCH}"|tex"
+		IGNORETOUCH=${IGNORETOUCH}"|tex/generic"
+		IGNORETOUCH=${IGNORETOUCH}"|tex/generic/config"
+		IGNORETOUCH=${IGNORETOUCH}"|tex/generic/config/language.dat"
+		IGNORETOUCH=${IGNORETOUCH}"|tex/generic/config/language.dat.lua"
+		IGNORETOUCH=${IGNORETOUCH}"|tex/generic/config/language.def"
 	Even if the file ${DIRECTORY}/ls-R was recreated by one of your
 	system tools, no re-squashing will be done if the new file is
 	identical to the old one and if there were no other changes.
+	Note that also parent directories must be explicitly listed to
+	ignore the possible changes in them.
 
 KEEP
 	If $KILL_FILE does not exist but $DIR_CHANGE is cleaned without

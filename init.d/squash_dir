@@ -594,7 +594,7 @@ NeedSquash() {
 	(	d="for i
 do	case \${i#\"\${DIR_CHANGE}/\"} in
 ${IGNORETOUCH})
-	c=\${DIR_SQUASH}/\${i##*/}
+	c=\${DIR_SQUASH}/\${i#\"\${DIR_CHANGE}/\"}
 	if test -L \"\${i}\"
 	then	test -L \"\${c}\"
 	else	! test -L \"\${c}\"

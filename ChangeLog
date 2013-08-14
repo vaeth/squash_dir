@@ -1,5 +1,9 @@
 # ChangeLog for squash_dir
 
+*squash_dir-13.1
+	Martin Väth <martin at mvath.de>:
+	- Fix IGNORETOUCH with subdirectories and document example
+
 *squash_dir-13.0
 	Martin Väth <martin at mvath.de>:
 	- Add optional support for systemd
