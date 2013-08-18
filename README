@@ -2,6 +2,11 @@
 (C) Martin Väth <martin@mvath.de>
 The license of this package is the GNU Public License GPL-2.
 
+WARNING: Unless you have a special reason, use instead squashmount from
+	https://github.com/vaeth/squashmount/
+The latter is more generic and works without problems with any init system.
+Moreover, squashmount has a highly improved control interface.
+
 What is this project?
 =====================
 

@@ -1,5 +1,9 @@
 # ChangeLog for squash_dir
 
+*squash_dir-13.1a
+	Martin Väth <martin at mvath.de>:
+	- Declare squashmount as the official successor of this project
+
 *squash_dir-13.1
 	Martin Väth <martin at mvath.de>:
 	- Fix IGNORETOUCH with subdirectories and document example
