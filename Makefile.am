@@ -2,6 +2,17 @@
 
 AUTOMAKE_OPTIONS = foreign 1.10 no-dist-gzip dist-bzip2 -Wobsolete -Wportability -Wextra-portability
 
+if OPENRC_WRAPPER
+extra_dist_wrapper =
+dist_bin_SCRIPTS = bin/openrc-wrapper
+INSTALL_WRAPPER = $(INSTALL_DATA)
+RM_WRAPPER = $(RM)
+else
+extra_dist_wrapper = bin/openrc-wrapper
+INSTALL_WRAPPER = :
+RM_WRAPPER = :
+endif
+
 EXTRA_DIST = \
 .gitignore \
 contrib \
@@ -10,7 +21,8 @@ INSTALL \
 systemd/squash_dir.service \
 systemd/squash_dir@.service \
 zsh/_openrc-wrapper \
-zsh/_squash_dir
+zsh/_squash_dir \
+${extra_dist_wrapper}
 
 dist_doc_DATA = \
 README \
@@ -30,7 +42,6 @@ nobase_dist_sysconf_DATA = \
 conf.d/squash_dir
 
 dist_sbin_SCRIPTS = \
-sbin/openrc-wrapper \
 sbin/squash_dir
 
 # Remove things created by autogen.sh
@@ -47,7 +58,7 @@ dist-hook:
 install-data-local:
 	$(AM_V_at)if test x"$(ZSH_COMPLETION)" != x"" ; \
 	then	$(INSTALL_DATA) -D "$(srcdir)/zsh/_squash_dir" "$(DESTDIR)$(ZSH_COMPLETION)/_squash_dir" && \
-		$(INSTALL_DATA) -D "$(srcdir)/zsh/_openrc-wrapper" "$(DESTDIR)$(ZSH_COMPLETION)/_openrc-wrapper" ; \
+		$(INSTALL_WRAPPER) -D "$(srcdir)/zsh/_openrc-wrapper" "$(DESTDIR)$(ZSH_COMPLETION)/_openrc-wrapper" ; \
 	fi
 	$(AM_V_at)if test x"$(SYSTEMSYSTEMUNITDIR)" != x"" ; \
 	then	$(INSTALL_DATA) -D "$(srcdir)/systemd/squash_dir.service" "$(DESTDIR)$(SYSTEMSYSTEMUNITDIR)/squash_dir.service" && \
@@ -57,7 +68,7 @@ install-data-local:
 uninstall-local:
 	$(AM_V_at)if test x"$(ZSH_COMPLETION)" != x"" ; \
 	then	$(RM) "$(DESTDIR)$(ZSH_COMPLETION)/_squash_dir" && \
-		$(RM) "$(DESTDIR)$(ZSH_COMPLETION)/_openrc-wrapper" ; \
+		$(RM_WRAPPER) "$(DESTDIR)$(ZSH_COMPLETION)/_openrc-wrapper" ; \
 	fi
 	$(AM_V_at)if test x"$(SYSTEMSYSTEMUNITDIR)" != x"" ; \
 	then	$(RM) "$(DESTDIR)$(SYSTEMSYSTEMUNITDIR)/squash_dir.service" && \

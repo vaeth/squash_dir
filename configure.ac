@@ -1,6 +1,6 @@
 # (C) Martin V\"ath <martin@mvath.de>
 
-AC_INIT([squash_dir], [13.1a])
+AC_INIT([squash_dir], [13.2])
 AC_PREREQ([2.64])
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_FILES([Makefile])
@@ -34,6 +34,22 @@ AS_VAR_IF([SYSTEMSYSTEMUNITDIR], [],
 		[AC_MSG_RESULT([no])],
 		[AC_MSG_RESULT([yes, into ${SYSTEMSYSTEMUNITDIR}])])
 AC_SUBST([SYSTEMSYSTEMUNITDIR])
+
+AC_MSG_CHECKING([openrc wrapper])
+AS_VAR_SET([wrapper], [:])
+AS_VAR_SET([wrappertext], ["yes (default)"])
+AC_ARG_ENABLE([openrc-wrapper],
+	[AS_HELP_STRING([--enable-openrc-wrapper],
+		[enable/disable openrc-wrapper (default is enable)])],
+	[AS_CASE(["${enableval}"],
+		[yes], [AS_VAR_SET([wrapper], [:])
+			AS_VAR_SET([wrappertext], ["yes (on request)"])],
+		[no], [AS_VAR_SET([wrapper], [false])
+			AS_VAR_SET([wrappertext], ["no"])],
+		[AC_MSG_ERROR([bad value ${enableval} for --enable-openrc-wrapper])])])
+AC_MSG_RESULT([${wrappertext}])
+AM_CONDITIONAL([OPENRC_WRAPPER],
+	[${wrapper}])
 
 AC_MSG_CHECKING([for ORDER default])
 AS_VAR_SET([order], ["overlayfs aufs unionfs-fuse funionfs unionfs"])

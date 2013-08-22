@@ -6,8 +6,8 @@ ConditionPathIsSymbolicLink=/etc/init.d/squash_%i
 [Service]
 Type=oneshot
 RemainAfterExit=true
-ExecStart=/usr/sbin/openrc-wrapper squash_%i start
-ExecStop=/usr/sbin/openrc-wrapper squash_%i stop
+ExecStart=/usr/bin/openrc-wrapper squash_%i start
+ExecStop=/usr/bin/openrc-wrapper squash_%i stop
 
 [Install]
 WantedBy=multi-user.target

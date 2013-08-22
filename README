@@ -6,6 +6,11 @@ WARNING: Unless you have a special reason, use instead squashmount from
 	https://github.com/vaeth/squashmount/
 The latter is more generic and works without problems with any init system.
 Moreover, squashmount has a highly improved control interface.
+Also the openrc-wrapper script is now available as a separate project:
+	https://github.com/vaeth/openrc-wrapper/
+If in doubt use the latter, as that is further developed.
+openrc-wrapper from squash_dir is practically frozen and only provided as
+a fallback.
 
 What is this project?
 =====================

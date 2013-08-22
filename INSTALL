@@ -24,7 +24,11 @@ Call as root (after creating the corresponding directories if necessary):
 	cp -p conf.d/squash_dir /etc/conf.d
 	cp -p sbin/* /usr/sbin
 	cp -p systemd/* /usr/lib/systemd/system
-	cp -p zsh/* /usr/share/zsh/site-functions
+	cp -p zsh/_squash_dir /usr/share/zsh/site-functions
+If you want to install the openrc-wrapper from here (instead of using the
+recommend way to install it from the openrc-wrapper project), use also
+	cp -p bin/* /usr/bin
+	cp -p zsh/_openrc-wrapper /usr/share/zsh/site-functions
 
 Here you can find the patches which redirect the progress bar of
 mksquashfs to stderr:
@@ -50,6 +54,12 @@ The behaviour of "./configure" and "make" is the standard one of
 projects using autotools as the build system.
 The following special options are supported for ./configure:
 
+--enable-openrc-wrapper
+--disable-openrc-wrapper
+  Do (not) install the provided openrc-wrapper: it is recommended to use
+  --disable-openrc-wrapper and to install openrc-wrapper instead from the
+  separate project.
+
 --with-first-order=STR
   With STR being one of overlayfs, aufs, unionfs-fuse, funionfs, unionfs
   Patches the sources such that the corresponding STR becomes the first choice
@@ -57,3 +67,7 @@ The following special options are supported for ./configure:
 
 --with-order=STR
   Patches the sources such that STR becomes the default ORDER.
+
+--with-systemdsystemunitdir=STR
+--without-systemdsystemunitdir
+  The systemd system directory (no means: do not install systemd service files)

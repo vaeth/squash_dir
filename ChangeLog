@@ -1,5 +1,10 @@
 # ChangeLog for squash_dir
 
+*squash_dir-13.2
+	Martin Väth <martin at mvath.de>:
+	- Move openrc-wrapper from /usr/sbin to /usr/bin
+	- Make openrc-wrapper installation optional.
+
 *squash_dir-13.1a
 	Martin Väth <martin at mvath.de>:
 	- Declare squashmount as the official successor of this project
