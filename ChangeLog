@@ -1,5 +1,9 @@
 # ChangeLog for squash_dir
 
+*squash_dir-13.3
+	Martin Väth <martin at mvath.de>:
+	- Recommend to use alias squash_dir='noglob squash_dir'
+
 *squash_dir-13.2
 	Martin Väth <martin at mvath.de>:
 	- Move openrc-wrapper from /usr/sbin to /usr/bin

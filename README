@@ -70,6 +70,15 @@ corresponding TARCMD and its requirement (like tar+bzip2) must exist.
 If you want that the hard status line is set, also the title script from
 http://github.com/vaeth/runtitle (version >=2.3) is required in your path.
 
+It is strongly recommended to put
+	alias squash_dir='noglob squash_dir'
+into your ~/.zshrc or /etc/zsh/zshrc or /etc/zshrc, respectively,
+so that things like
+	squash_dir start *
+will work in your zsh as intended without the need to quote *.
+(I assume that you do not use a poor shell instead of zsh.)
+
+
 
 Main Example:
 =============
