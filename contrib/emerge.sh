@@ -1,4 +1,4 @@
-#! /usr/bin/env sh
+#!/usr/bin/env sh
 
 category="sys-fs"
 project="squash_dir"

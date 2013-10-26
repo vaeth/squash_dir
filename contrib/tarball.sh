@@ -1,4 +1,4 @@
-#! /usr/bin/env sh
+#!/usr/bin/env sh
 
 project='squash_dir'
 mkclean='contrib/clean.sh'

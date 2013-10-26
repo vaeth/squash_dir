@@ -1,4 +1,4 @@
-#! /usr/bin/env sh
+#!/usr/bin/env sh
 # (C) Martin V\"ath <martin@mvath.de>
 
 [ -n "${PATH}" ] || PATH='/usr/local/bin:/usr/local/sbin:/usr/bin:/bin:/opt/bin'
@@ -134,8 +134,21 @@ case ${titleopt} in
 	Usage;;
 esac
 
-if ps -p 1 | grep systemd >/dev/null 2>&1
+if test -r /run/openrc/softlevel
 then
+CallStatus() {
+	"${1}" -q status >/dev/null 2>&1
+}
+CallOther() {
+	"${@}"
+}
+CallStart() {
+	"${@}"
+}
+PrintInit() {
+	printf "%-${max_len:-40}s " "${*}"
+}
+else
 CallStatus() {
 	systemctl --quiet is-active "squash_dir@${1#*squash_}.service" >/dev/null 2>&1
 }
@@ -161,19 +174,6 @@ PrintInit() {
 	printf "%-${max_len:-40}s " ": ${1#*squash_}"
 }
 	PrintInit "${@}"
-}
-else
-CallStatus() {
-	"${1}" -q status >/dev/null 2>&1
-}
-CallOther() {
-	"${@}"
-}
-CallStart() {
-	"${@}"
-}
-PrintInit() {
-	printf "%-${max_len:-40}s " "${*}"
 }
 fi
 
