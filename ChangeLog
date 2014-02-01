@@ -1,5 +1,17 @@
 # ChangeLog for squash_dir
 
+*squash_dir-13.6
+	Martin Väth <martin at mvath.de>:
+	- Update emerge.sh to current portageq
+
+*squash_dir-13.4
+*squash_dir-13.5
+	Martin Väth <martin at mvath.de>:
+	- Improve check for running openrc
+	- Fix shebangs
+	- Support new git
+	- Update tagging mechanism in release.sh
+
 *squash_dir-13.3
 	Martin Väth <martin at mvath.de>:
 	- Recommend to use alias squash_dir='noglob squash_dir'
