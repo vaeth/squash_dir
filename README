@@ -68,7 +68,7 @@ Of course, for the case that you use the FILE_TBZ feature, also the
 corresponding TARCMD and its requirement (like tar+bzip2) must exist.
 
 If you want that the hard status line is set, also the title script from
-http://github.com/vaeth/runtitle (version >=2.3) is required in your path.
+https://github.com/vaeth/runtitle (version >=2.3) is required in your path.
 
 It is strongly recommended to put
 	alias squash_dir='noglob squash_dir'
