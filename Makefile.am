@@ -22,7 +22,7 @@ systemd/squash_dir.service \
 systemd/squash_dir@.service \
 zsh/_openrc-wrapper \
 zsh/_squash_dir \
-${extra_dist_wrapper}
+$extra_dist_wrapper
 
 dist_doc_DATA = \
 README \
@@ -48,7 +48,7 @@ sbin/squash_dir
 maintainer-clean-local:
 	$(AM_V_at)$(RM) -fr "$(top_srcdir)/build" "$(top_srcdir)/config" "$(top_srcdir)/m4" "$(top_srcdir)"/tmpcvs* "$(top_srcdir)"/tmpwrk*
 	$(AM_V_at)$(RM) -f "$(top_srcdir)/aclocal.m4" "$(top_srcdir)/Makefile.in" "$(top_srcdir)/configure"
-	$(AM_V_at)for i in tar.xz tar.bz2 tar.gz zip; do rm -vf -- "$(top_srcdir)"/$(PACKAGE)-*."$${i}"; done
+	$(AM_V_at)for i in tar.xz tar.bz2 tar.gz zip; do rm -vf -- "$(top_srcdir)"/$(PACKAGE)-*."$$i"; done
 
 # Remove things created by autogen.sh also in the tarball
 dist-hook:

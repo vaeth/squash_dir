@@ -100,30 +100,30 @@ in /etc/conf.d/
 Here are typical examples of the content of these files:
 
 /etc/conf.d/squash_portage:
-DIRECTORY="/usr/portage"
-DIR_CHANGE="${DIRECTORY}.changes"
-DIR_SQUASH="${DIRECTORY}.readonly"
-COMPRESSION=""
+DIRECTORY=/usr/portage
+DIR_CHANGE=$DIRECTORY.changes
+DIR_SQUASH=$DIRECTORY.readonly
+COMPRESSION=
 THRESHOLD=40000
 
 /etc/conf.d/squash_tex:
-DIRECTORY="/usr/share/texmf-dist"
-DIR_CHANGE="${DIRECTORY}.changes"
-DIR_SQUASH="${DIRECTORY}.readonly"
-IGNORETOUCH="ls-R"
-IGNORETOUCH=${IGNORETOUCH}"|tex"
-IGNORETOUCH=${IGNORETOUCH}"|tex/generic"
-IGNORETOUCH=${IGNORETOUCH}"|tex/generic/config"
-IGNORETOUCH=${IGNORETOUCH}"|tex/generic/config/language.dat"
-IGNORETOUCH=${IGNORETOUCH}"|tex/generic/config/language.dat.lua"
-IGNORETOUCH=${IGNORETOUCH}"|tex/generic/config/language.def"
+DIRECTORY=/usr/share/texmf-dist
+DIR_CHANGE=$DIRECTORY.changes
+DIR_SQUASH=$DIRECTORY.readonly
+IGNORETOUCH=ls-R
+IGNORETOUCH=$IGNORETOUCH"|tex"
+IGNORETOUCH=$IGNORETOUCH"|tex/generic"
+IGNORETOUCH=$IGNORETOUCH"|tex/generic/config"
+IGNORETOUCH=$IGNORETOUCH"|tex/generic/config/language.dat"
+IGNORETOUCH=$IGNORETOUCH"|tex/generic/config/language.dat.lua"
+IGNORETOUCH=$IGNORETOUCH"|tex/generic/config/language.def"
 
 /etc/conf.d/squash_db:
-DIRECTORY="/var/db"
-FILE_SQFS_OLD="${DIRECTORY}.sqfs.bak"
-DIR_CHANGE="${DIRECTORY}.changes"
-DIR_SQUASH="${DIRECTORY}.readonly"
-COMPRESSION="lzo"
+DIRECTORY=/var/db
+FILE_SQFS_OLD=$DIRECTORY.sqfs.bak
+DIR_CHANGE=$DIRECTORY.changes
+DIR_SQUASH=$DIRECTORY.readonly
+COMPRESSION=lzo
 THRESHOLD=1000
 
 Optionally, you can also modify global defaults in /etc/conf.d/squash_dir;
@@ -132,14 +132,14 @@ see the comments in the same conf.d/squash_dir file for details
 The meaning of this configuration data is the following:
 The first line determines the directory you want to keep compressed and
 be writable; the corresponding compressed data will be expected/created
-in the file ${DIRECTORY}.sqfs (e.g. in /usr/share/portage.sqfs).
-Moreover, later, there will be auxiliary directories ${DIRECTORY}.changes
-and ${DIRECTORIES}.readonly available. The latter is the content of
+in the file $DIRECTORY.sqfs (e.g. in /usr/share/portage.sqfs).
+Moreover, later, there will be auxiliary directories $DIRECTORY.changes
+and $DIRECTORIES.readonly available. The latter is the content of
 the compressed data without any modifications (this directory is readonly),
 and the former contains the modified files (and some metadata, depending
 on which of overlayfs|aufs|unionfs-fuse|unionfs|funionfs you are using).
 The THRESHOLD value means that your changes will not be compressed on every
-shutdown but only if ${DIRECTORY}.changes gets large enough.
+shutdown but only if $DIRECTORY.changes gets large enough.
 Moreover, the IGNORETOUCH-value in squash_tex means that changes only in
 the date of the file /usr/share/texmf-dist/ls-R or
 /usr/share/texmf-dist/generic/config/language.{dat{,.lua},def}
@@ -353,7 +353,7 @@ DIRECTORY
 	be mounted, i.e. the path of the "original" directory.
 	If you want to use this script to compress your portage tree,
 	it might be a good idea to set this variables with
-	DIRECTORY=`. /etc/make.conf 2>/dev/null; printf '%s' "${PORTDIR}"`
+	DIRECTORY=`. /etc/make.conf 2>/dev/null; printf '%s' "$PORTDIR"`
 	or the slower but more portable
 	DIRECTORY="`portageq portdir`"
 
@@ -422,7 +422,7 @@ DIR_SQUASH
 	variable, but now it is save to use it.
 
 	If you leave this variable empty and DIR_CHANGE is nonempty,
-	DIR_SQUASH defaults to ${RUNPATH}/${SVCNAME}.readonly
+	DIR_SQUASH defaults to $RUNPATH/$SVCNAME.readonly
 
 	If DIR_CHANGE is empty, DIR_SQUASH is not really needed and
 	should usually be left empty. Nevertheless, if you set
@@ -446,7 +446,7 @@ NAME_FILE
 	DIR_SQUASH, this variable must contain the name of a file
 	which is used to store these temporary names. If no errors
 	occur, this file is created/removed on start/stop.
-	If NAME_FILE is empty, it defaults to ${RUNPATH}/${SVCNAME}
+	If NAME_FILE is empty, it defaults to $RUNPATH/$SVCNAME
 
 TMP_SQFS
 	This is a filename (which supports the temporary name feature)
@@ -461,13 +461,13 @@ TMP_SQFS
 	use a ramdisk like /dev/shm/dir_squash_tmp_sqfs.XXXXXXXX
 	(but you will not get much speed increase from doing so).
 	If TMP_SQFS is empty, it defaults to
-	${TMPDIR}/${SVCNAME}.sqfs.XXXXXXXX
+	$TMPDIR/$SVCNAME.sqfs.XXXXXXXX
 
 FILE_SQFS
 	This is the file which contains the actual squashfs data of
 	DIRECTORY (this file must exist when you start this script.
 	See the output message of the script on how to create it.)
-	If you leave this empty, it defaults to ${DIRECTORY}.sqfs.
+	If you leave this empty, it defaults to $DIRECTORY.sqfs.
 
 FILE_SQFS_OLD
 	If defined, this file will be an (automatically updated)
@@ -503,14 +503,14 @@ MV_FILE_TBZ
 	FILE_TBZ_OLD. See MV_FILE_SQFS.
 
 IGNORETOP
-	This is a list of paths relative to the top-level ${DIRECTORY}
-	whose changes (which actually occur in ${DIR_CHANGE})
+	This is a list of paths relative to the top-level $DIRECTORY
+	whose changes (which actually occur in $DIR_CHANGE)
 	are ignored when squash_dir decides whether the directory
 	needs to be re-squashed. So, for example if you define
 	IGNORETOP='\"A \\\"magic\\\" link\" \"subdir/device-*\"'
 	then changes in the files/links/devices/whatever called
-		${DIR_CHANGE}/A "magic" file
-		${DIR_CHANGE}/subdir/device-<something may follow here>
+		$DIR_CHANGE/A "magic" file
+		$DIR_CHANGE/subdir/device-<something may follow here>
 	will get ignored. Do not use this for directories if you also want to
 	ignore the content of the directories - use IGNOREDIR for the latter.
 	The format of the list is space-separated but quoting is allowed.
@@ -535,10 +535,10 @@ IGNORE
 	eval "..." context.
 	Here you can check also for other files which are not in the
 	top-level directory. If you use -path, note that the pathname starts
-	with ${DIR_CHANGE}, so e.g. to ignore the link .bad_link in the
-	top-level of ${DIRECTORY}, but only if this is really a link)
+	with $DIR_CHANGE, so e.g. to ignore the link .bad_link in the
+	top-level of $DIRECTORY, but only if this is really a link)
 	you can define
-	IGNORE='-path "\${DIR_CHANGE}"/.bad_link -type l'
+	IGNORE='-path "\$DIR_CHANGE"/.bad_link -type l'
 	If your match is a directory and you call -prune, then also the
 	content of the directory is ignore.
 
@@ -553,10 +553,10 @@ IGNOREDIR
 	content of this directory.
 
 IGNORETOUCH
-	This is a list of paths relative to the top-level ${DIRECTORY}
-	whose changes (which actually occur in ${DIR_CHANGE}) are ignored,
+	This is a list of paths relative to the top-level $DIRECTORY
+	whose changes (which actually occur in $DIR_CHANGE) are ignored,
 	provided that the diff utility shows that the file was not modified
-	compared to the corresponding original file in ${DIR_SQUASH}.
+	compared to the corresponding original file in $DIR_SQUASH.
 	The format of the list is that of a case statement, i.e. you can
 	use file globbing and | to separate alternatives and have to
 	quote | or ) if you use it as symbols. Note that no pruning of
@@ -564,14 +564,14 @@ IGNORETOUCH
 	is checked against IGNORETOUCH; directories are by definition
 	always equal if they existed before.
 	Typical example:
-		IGNORETOUCH="ls-R"
-		IGNORETOUCH=${IGNORETOUCH}"|tex"
-		IGNORETOUCH=${IGNORETOUCH}"|tex/generic"
-		IGNORETOUCH=${IGNORETOUCH}"|tex/generic/config"
-		IGNORETOUCH=${IGNORETOUCH}"|tex/generic/config/language.dat"
-		IGNORETOUCH=${IGNORETOUCH}"|tex/generic/config/language.dat.lua"
-		IGNORETOUCH=${IGNORETOUCH}"|tex/generic/config/language.def"
-	Even if the file ${DIRECTORY}/ls-R was recreated by one of your
+		IGNORETOUCH=ls-R
+		IGNORETOUCH=$IGNORETOUCH"|tex"
+		IGNORETOUCH=$IGNORETOUCH"|tex/generic"
+		IGNORETOUCH=$IGNORETOUCH"|tex/generic/config"
+		IGNORETOUCH=$IGNORETOUCH"|tex/generic/config/language.dat"
+		IGNORETOUCH=$IGNORETOUCH"|tex/generic/config/language.dat.lua"
+		IGNORETOUCH=$IGNORETOUCH"|tex/generic/config/language.def"
+	Even if the file $DIRECTORY/ls-R was recreated by one of your
 	system tools, no re-squashing will be done if the new file is
 	identical to the old one and if there were no other changes.
 	Note that also parent directories must be explicitly listed to
@@ -582,13 +582,13 @@ KEEP
 	re-squashing (this can only happen if no other files than those in
 	IGNORE or IGNORETOUCH were changed)
 	then the files in this variable are kept anyway.
-	Currently, only files/subdirs of ${DIRECTORY} are supported,
+	Currently, only files/subdirs of $DIRECTORY are supported,
 	no deeper nesting is allowed (i.e. you must not use "/" here).
 	The format is that of "case", i.e. you can use wildcards and
 	separate several names with '|'. Quoting is of course supported.
 	You must not use ")" in the name unless you quote it.
-	Example: KEEP=".*|'*)'" will keep all files/subdirs of the form
-	${DIRECTORY}/.* or "${DIRECTORY}/*)"
+	Example: KEEP=.*|'*)' will keep all files/subdirs of the form
+	$DIRECTORY/.* or "$DIRECTORY/*)"
 
 KILL_NOT
 	If $KILL_FILE exists (so that $DIR_CHANGE is cleaned without
@@ -722,7 +722,7 @@ LOCKFILE
 	Since mount/umount calls cannot properly be done in parallel
 	(since apparently they do not properly lock /etc/mtab), we use
 	flock for these calls to create a lockfile (which is never
-	erased) to allow rc_parallel="YES". You can set this variable to
+	erased) to allow rc_parallel=YES. You can set this variable to
 	the following values:
 	1) To a path of the lockfile. The path must be absolute, i.e.
 	   starting with "/". It is dangerous to use a user-writable
@@ -731,5 +731,5 @@ LOCKFILE
 	   In this case the lockfile /etc/mtab.lock is used unless
 	   /etc/mtab is a symbolic link. In the latter case the lockfile
 	   feature is switched off.
-	3) In all other cases (e.g. if you set LOCKFILE="" or LOCKFILE="no")
+	3) In all other cases (e.g. if you set LOCKFILE= or LOCKFILE=no)
 	   the lockfile feature is switched off.

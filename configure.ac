@@ -10,29 +10,29 @@ m4_ifdef([AM_SILENT_RULES],
 	[AM_SILENT_RULES([yes])])
 
 AC_MSG_CHECKING([zsh completion])
-AS_VAR_SET([ZSH_COMPLETION], ["${datadir}/zsh/site-functions"])
+AS_VAR_SET([ZSH_COMPLETION], ["$datadir/zsh/site-functions"])
 AC_ARG_WITH([zsh-completion],
 	[AS_HELP_STRING([--with-zsh-completion=STR],
 		[install zsh-completion file in directory STR])],
-	[AS_CASE([${withval}],
+	[AS_CASE([$withval],
 		[/*], [AS_VAR_COPY([ZSH_COMPLETION], [withval])],
 		[no], [AS_VAR_SET([ZSH_COMPLETION], [])])])
 AS_VAR_IF([ZSH_COMPLETION], [],
 		[AC_MSG_RESULT([no])],
-		[AC_MSG_RESULT([yes, into ${ZSH_COMPLETION}])])
+		[AC_MSG_RESULT([yes, into $ZSH_COMPLETION])])
 AC_SUBST([ZSH_COMPLETION])
 
 AC_MSG_CHECKING([systemd system units])
-AS_VAR_SET([SYSTEMSYSTEMUNITDIR], ["${libdir}/systemd/system"])
+AS_VAR_SET([SYSTEMSYSTEMUNITDIR], ["$libdir/systemd/system"])
 AC_ARG_WITH([systemdsystemunitdir],
 	[AS_HELP_STRING([--with-systemdsystemunitdir=STR],
 		[install systemd unit files in directory STR])],
-	[AS_CASE([${withval}],
+	[AS_CASE([$withval],
 		[/*], [AS_VAR_COPY([SYSTEMSYSTEMUNITDIR], [withval])],
 		[no], [AS_VAR_SET([SYSTEMSYSTEMUNITDIR], [])])])
 AS_VAR_IF([SYSTEMSYSTEMUNITDIR], [],
 		[AC_MSG_RESULT([no])],
-		[AC_MSG_RESULT([yes, into ${SYSTEMSYSTEMUNITDIR}])])
+		[AC_MSG_RESULT([yes, into $SYSTEMSYSTEMUNITDIR])])
 AC_SUBST([SYSTEMSYSTEMUNITDIR])
 
 AC_MSG_CHECKING([openrc wrapper])
@@ -41,22 +41,22 @@ AS_VAR_SET([wrappertext], ["yes (default)"])
 AC_ARG_ENABLE([openrc-wrapper],
 	[AS_HELP_STRING([--enable-openrc-wrapper],
 		[enable/disable openrc-wrapper (default is enable)])],
-	[AS_CASE(["${enableval}"],
+	[AS_CASE(["$enableval"],
 		[yes], [AS_VAR_SET([wrapper], [:])
 			AS_VAR_SET([wrappertext], ["yes (on request)"])],
 		[no], [AS_VAR_SET([wrapper], [false])
 			AS_VAR_SET([wrappertext], ["no"])],
-		[AC_MSG_ERROR([bad value ${enableval} for --enable-openrc-wrapper])])])
-AC_MSG_RESULT([${wrappertext}])
+		[AC_MSG_ERROR([bad value $enableval for --enable-openrc-wrapper])])])
+AC_MSG_RESULT([$wrappertext])
 AM_CONDITIONAL([OPENRC_WRAPPER],
-	[${wrapper}])
+	[$wrapper])
 
 AC_MSG_CHECKING([for ORDER default])
 AS_VAR_SET([order], ["overlayfs aufs unionfs-fuse funionfs unionfs"])
 AC_ARG_WITH([first-order],
 	[AS_HELP_STRING([--with-first-order=STR],
 		[use STR as first entry in ORDER default])],
-	[AS_CASE([${withval}],
+	[AS_CASE([$withval],
 		[overlayfs], [AS_VAR_SET([order],
 			["overlayfs aufs unionfs-fuse funionfs unionfs"])],
 		[aufs], [AS_VAR_SET([order],
@@ -70,13 +70,13 @@ AC_ARG_WITH([first-order],
 AC_ARG_WITH([order],
 	[AS_HELP_STRING([--with-order=STR],
 		[use STR as ORDER default])],
-	[AS_CASE([${withval}],
+	[AS_CASE([$withval],
 		[*overlay*|*aufs*|*union*],
 			[AS_VAR_COPY([order], [withval])])])
-AC_MSG_RESULT([${order}])
+AC_MSG_RESULT([$order])
 
 AC_PROG_SED()
-AS_IF([["${SED}" -e "s/[-a-z ]*  ([*])/${order}  (*)/" README >|patching.tmp]],
+AS_IF([["$SED" -e "s/[-a-z ]*  ([*])/$order  (*)/" README >|patching.tmp]],
 	[],
 	[AC_MSG_ERROR(["sed for README failed"])])
 AS_IF([diff README patching.tmp],
@@ -85,7 +85,7 @@ AS_IF([diff README patching.tmp],
 	AS_IF([cat patching.tmp >|README],
 		[],
 		[AC_MSG_ERROR(["cannot patch README"])])])
-AS_IF([["${SED}" -e "s/ORDER-[-a-z ]*/ORDER-${order}/" init.d/squash_dir >|patching.tmp]],
+AS_IF([["$SED" -e "s/ORDER-[-a-z ]*/ORDER-$order/" init.d/squash_dir >|patching.tmp]],
 	[],
 	[AC_MSG_ERROR(["sed for init.d/squash_dir failed"])])
 AS_IF([diff init.d/squash_dir patching.tmp],
@@ -94,7 +94,7 @@ AS_IF([diff init.d/squash_dir patching.tmp],
 	AS_IF([cat patching.tmp >|init.d/squash_dir],
 		[],
 		[AC_MSG_ERROR(["cannot patch init.d/squash_dir"])])])
-AS_IF([["${SED}" -e "s/ORDER=[-a-z ]*/ORDER=${order}/" conf.d/squash_dir >|patching.tmp]],
+AS_IF([["$SED" -e "s/ORDER=[-a-z ]*/ORDER=$order/" conf.d/squash_dir >|patching.tmp]],
 	[],
 	[AC_MSG_ERROR(["sed for conf.d/squash_dir failed"])])
 AS_IF([diff conf.d/squash_dir patching.tmp],

@@ -1,26 +1,26 @@
 #!/usr/bin/env sh
 # (C) Martin V\"ath <martin@mvath.de>
 
-[ -n "${PATH}" ] || PATH='/usr/local/bin:/usr/local/sbin:/usr/bin:/bin:/opt/bin'
-PATH=${PATH}':/usr/sbin:/sbin'
+[ -n "$PATH" ] || PATH='/usr/local/bin:/usr/local/sbin:/usr/bin:/bin:/opt/bin'
+PATH=$PATH':/usr/sbin:/sbin'
 
 Echo() {
-	printf '%s\n' "${*}"
+	printf '%s\n' "$*"
 }
 
 Error() {
-	Echo "${0##*/}: ${*}" >&2
+	Echo "${0##*/}: $*" >&2
 }
 
 Exit() {
-	exit ${1}
+	exit $1
 }
 
 Title() {
 Title() {
 :
 }
-	case ${titleopt} in
+	case $titleopt in
 	*-*)	return;;
 	esac
 	command -v title >/dev/null 2>&1 || return 0
@@ -28,22 +28,22 @@ TitleVerbose() {
 :
 }
 Exit() {
-	exitstatus=${1:-${?}}
+	exitstatus=${1:-$?}
 	TitleVerbose
-	exit ${exitstatus}
+	exit $exitstatus
 }
 TitleInit() {
-. title "${@}"
+. title "$@"
 }
-	TitleInit ${titleopt:+"-${titleopt}"} -- "${@}"
+	TitleInit ${titleopt:+"-$titleopt"} -- "$@"
 }
 
 TitleInfo() {
-	Title "${0##*/}: ${*}"
+	Title "${0##*/}: $*"
 }
 
 Die() {
-	Error "${*}"
+	Error "$*"
 	Exit 1
 }
 
@@ -110,7 +110,7 @@ titleopt=p
 alpha_order=false
 OPTIND=1
 while getopts 'sSnNfFkKeET:aAh?' opt
-do	case ${opt} in
+do	case $opt in
 	s)	save_force=:;;
 	S)	save_force=false;;
 	n)	keep_force=:;;
@@ -121,15 +121,15 @@ do	case ${opt} in
 	K)	kill_force=false;;
 	e)	error_skip=:;;
 	E)	error_skip=false;;
-	T)	titleopt=${titleopt}${OPTARG};;
+	T)	titleopt=$titleopt$OPTARG;;
 	a)	alpha_order=:;;
 	A)	alpha_order=false;;
 	*)	Usage 0;;
 	esac
 done
-shift $(( ${OPTIND} - 1 ))
+shift $(( $OPTIND - 1 ))
 
-case ${titleopt} in
+case $titleopt in
 *[!pPfHsS-]*)
 	Usage;;
 esac
@@ -137,16 +137,16 @@ esac
 if test -r /run/openrc/softlevel
 then
 CallStatus() {
-	"${1}" -q status >/dev/null 2>&1
+	"$1" -q status >/dev/null 2>&1
 }
 CallOther() {
-	"${@}"
+	"$@"
 }
 CallStart() {
-	"${@}"
+	"$@"
 }
 PrintInit() {
-	printf "%-${max_len:-40}s " "${*}"
+	printf "%-${max_len:-40}s " "$*"
 }
 else
 CallStatus() {
@@ -155,84 +155,84 @@ CallStatus() {
 CallOther() {
 	callother=${1#*squash_}
 	shift
-	openrc-wrapper "squash_${callother}" "${@}"
+	openrc-wrapper "squash_$callother" "$@"
 }
 CallStart() {
-	case ${2} in
+	case $2 in
 	start|stop|restart)
-		systemctl ${2} "squash_dir@${1#*squash_}.service";;
+		systemctl $2 "squash_dir@${1#*squash_}.service";;
 	START|STOP|RESTART)
-		CallOther "${@}";;
+		CallOther "$@";;
 	*)
-		Error "${2} not available with systemd"
+		Error "$2 not available with systemd"
 		Exit 1;;
 	esac
 }
 PrintInit() {
-	max_len=$(( ${max_len} - 17 ))
+	max_len=$(( $max_len - 17 ))
 	PrintInit() {
 	printf "%-${max_len:-40}s " ": ${1#*squash_}"
 }
-	PrintInit "${@}"
+	PrintInit "$@"
 }
 fi
 
 PrintComment() {
-	Echo "# ${*}"
+	Echo "# $*"
 }
 
 PrintAction() {
-	printf '%-8s' "${1}"
-	[ ${#} -gt 1 ] || return
+	printf '%-8s' "$1"
+	[ $# -gt 1 ] || return
 	shift
-	PrintComment "${*}"
+	PrintComment "$*"
 }
 
 PrintNoSave() {
 	PrintAction "${3:-stop}"
-	${1} || need_result=`CallOther "${2}" -q need_squash 2>&1`
-	case ${need_result} in
+	$1 || need_result=`CallOther "$2" -q need_squash 2>&1`
+	case $need_result in
 	0)
 		PrintComment 'is unmodified';;
 	1)
 		nosave=:
 		PrintComment 'will not re-squash changes';;
 	*)
-		PrintComment "error: ${a}";;
+		PrintComment "error: $a";;
 	esac
 }
 
 StatusRestart() {
-	statusres=`CallOther "${1}" -q have_kill 2>&1`
-	case ${statusres} in
+	statusres=`CallOther "$1" -q have_kill 2>&1`
+	case $statusres in
 	0)
 		PrintAction "${2:-restart}" 'changes will be re-squashed';;
 	1)
 		PrintAction "${2:-restart}" 'changes will be deleted';;
 	*)
-		Error "error: ${statusres}"
+		Error "error: $statusres"
 		return 1;;
 	esac
 	return 0
 }
 
 Status() {
-	statusarg=${1}
+	statusarg=$1
 	shift
-	PrintInit "${1}"
+	PrintInit "$1"
 	statusmsg=
-	if ! CallStatus "${1}"
-	then	if [ "${statusarg}" = 'status' ]
+	if ! CallStatus "$1"
+	then	if [ "$statusarg" = 'status' ]
 		then	PrintAction 'start' 'initscript was not started'
 			return 0
 		fi
 		statusmsg=:
 	fi
-	statusres=`CallOther "${1}" -q will_squash 2>&1`
-	case ${statusres} in
-	0)	PrintNoSave false "${1}" ${statusmsg:+STOP};;
-	1)	StatusRestart "${1}" ${statusmsg:+RESTART} || return 1;;
-	*)	Error "error: ${statusres}"; return 1;;
+	statusres=`CallOther "$1" -q will_squash 2>&1`
+	case $statusres in
+	0)	PrintNoSave false "$1" ${statusmsg:+STOP};;
+	1)	StatusRestart "$1" ${statusmsg:+RESTART} || return 1;;
+	*)	Error "error: $statusres"; return 1;;
 	esac
 	return 0
 }
@@ -246,23 +246,23 @@ NoTemp() {
 RemoveTemp() {
 	trap : EXIT HUP INT TERM
 	if [ -n "${dosave_file:++}" ]
-	then	test -f "${dosave_file}" && rm -- "${dosave_file}"
+	then	test -f "$dosave_file" && rm -- "$dosave_file"
 		dosave_file=
 	fi
 	if [ -n "${nosave_file:++}" ]
-	then	test -f "${nosave_file}" && rm -- "${nosave_file}"
+	then	test -f "$nosave_file" && rm -- "$nosave_file"
 		nosave_file=
 	fi
 	if [ -n "${kill_file:++}" ]
-	then	test -f "${kill_file}" && rm -- "${kill_file}"
+	then	test -f "$kill_file" && rm -- "$kill_file"
 		kill_file=
 	fi
 	trap - EXIT HUP INT TERM
 }
 
 GetSpecFile() {
-	spec_file=`"${1}" print_${2} 2>&1 && echo x` || {
-		Error "error: ${1} print_${2}: ${spec_file}"
+	spec_file=`"$1" print_$2 2>&1 && echo x` || {
+		Error "error: $1 print_$2: $spec_file"
 		dirchange=
 		return 1
 	}
@@ -271,29 +271,29 @@ GetSpecFile() {
 
 create_trap=:
 CreateFile() {
-	[ -n "${2}" ] && ! test -e "${2}" || return 0
-	eval ${1}=\${2}
-	if ${create_trap}
+	[ -n "$2" ] && ! test -e "$2" || return 0
+	eval $1=\$2
+	if $create_trap
 	then	trap RemoveTemp EXIT HUP INT TERM
 		create_trap=false
 	fi
-	: >"${2}" && return
+	: >"$2" && return
 	RemoveTemp
 	return 1
 }
 
 CreateDosave() {
-	GetSpecFile "${1}" ignore_threshold && \
-		CreateFile dosave_file "${spec_file}"
+	GetSpecFile "$1" ignore_threshold && \
+		CreateFile dosave_file "$spec_file"
 }
 
 
 CreateNosave() {
-	GetSpecFile "${1}" magic_file && CreateFile nosave_file "${spec_file}"
+	GetSpecFile "$1" magic_file && CreateFile nosave_file "$spec_file"
 }
 
 CreateKillfile() {
-	GetSpecFile "${1}" kill_file && CreateFile kill_file "${spec_file}"
+	GetSpecFile "$1" kill_file && CreateFile kill_file "$spec_file"
 }
 
 CheckStop() {
@@ -301,163 +301,163 @@ CheckStop() {
 	NoTemp
 	checked_need=false
 	will_restart=:
-	if ${kill_force}
-	then	CreateKillfile "${1}"
+	if $kill_force
+	then	CreateKillfile "$1"
 		return
 	fi
-	checkstopres=`CallOther "${1}" -q will_squash 2>&1`
-	case ${checkstopres} in
+	checkstopres=`CallOther "$1" -q will_squash 2>&1`
+	case $checkstopres in
 	0)
 		:;;
 	1)
-		${keep_force} || return 0
-		CreateNosave "${1}"
+		$keep_force || return 0
+		CreateNosave "$1"
 		return;;
 	*)
-		Error "error in ${1}: ${checkstopres}"
+		Error "error in $1: $checkstopres"
 		return 1;;
 	esac
-	if ! ${save_force}
-	then	will_restart=${force}
+	if ! $save_force
+	then	will_restart=$force
 		return 0
 	fi
-	if ${force}
-	then	CreateDosave "${1}"
+	if $force
+	then	CreateDosave "$1"
 		return
 	fi
 	checked_need=:
-	need_result=`CallOther "${1}" -q need_squash 2>&1`
-	case ${need_result} in
+	need_result=`CallOther "$1" -q need_squash 2>&1`
+	case $need_result in
 	0)
 		will_restart=false
 		return 0;;
 	1)
-		CreateDosave "${1}"
+		CreateDosave "$1"
 		return;;
 	*)
-		Error "error in ${1}: ${checkstopres}"
+		Error "error in $1: $checkstopres"
 		return 1;;
 	esac
 }
 
 CheckRunning() {
-	if CallStatus "${1}"
+	if CallStatus "$1"
 	then	if ! ${2:-:}
-		then	${3:-Echo} "${1} was already started"
+		then	${3:-Echo} "$1 was already started"
 			return 1
 		fi
 	elif ${2:-:}
-	then	${3:-Echo} "${1} is not running"
+	then	${3:-Echo} "$1 is not running"
 		return 1
 	fi
 }
 
 Stop() {
-	stoparg=${1}
+	stoparg=$1
 	shift
-	case ${stoparg} in
+	case $stoparg in
 	STOP|RESTART)
 		is_running=false
-		if ${force}
-		then	CheckRunning "${1}" false : || is_running=:
-		else	CheckRunning "${1}" false || return 0
+		if $force
+		then	CheckRunning "$1" false : || is_running=:
+		else	CheckRunning "$1" false || return 0
 		fi;;
 	*)
 		is_running=:
-		CheckRunning "${1}" || return 0;;
+		CheckRunning "$1" || return 0;;
 	esac
 	filetext=${1#*squash_}
-	case ${stoparg} in
+	case $stoparg in
 	restart)
-		CheckStop "${1}" || return
-		if ${will_restart}
-		then	TitleInfo "restart ${filetext}"
-			Echo "Restarting ${filetext}..."
-			CallStart "${1}" restart && RemoveTemp
-		else	PrintInit "${1}"
-			PrintNoSave ${checked_need} "${1}"
+		CheckStop "$1" || return
+		if $will_restart
+		then	TitleInfo "restart $filetext"
+			Echo "Restarting $filetext..."
+			CallStart "$1" restart && RemoveTemp
+		else	PrintInit "$1"
+			PrintNoSave $checked_need "$1"
 		fi;;
 	stop|STOP|RESTART)
-		CheckStop "${1}" || return
-		if [ "${stoparg}" = 'stop' ]
-		then	TitleInfo "stop ${filetext}"
-			Echo "stopping ${filetext}"
-		elif ${is_running}
-		then	TitleInfo "STOP-action of running ${filetext}"
-			Echo "STOP-action of running ${filetext}"
-		else	TitleInfo "STOP non-running ${filetext}"
-			Echo "STOPPING non-running ${filetext}"
+		CheckStop "$1" || return
+		if [ "$stoparg" = 'stop' ]
+		then	TitleInfo "stop $filetext"
+			Echo "stopping $filetext"
+		elif $is_running
+		then	TitleInfo "STOP-action of running $filetext"
+			Echo "STOP-action of running $filetext"
+		else	TitleInfo "STOP non-running $filetext"
+			Echo "STOPPING non-running $filetext"
 		fi
-		CallStart "${1}" ${stoparg}
-		stopret=${?}
+		CallStart "$1" $stoparg
+		stopret=$?
 		RemoveTemp
-		if [ "${stoparg}" = 'RESTART' ] && [ ${stopret} -eq 0 ]
-		then	START "${1}"
+		if [ "$stoparg" = 'RESTART' ] && [ $stopret -eq 0 ]
+		then	START "$1"
 		fi
-		return ${stopret};;
+		return $stopret;;
 	zap)
-		Echo "Zapping ${filetext}"
-		CallStart "${1}" zap;;
+		Echo "Zapping $filetext"
+		CallStart "$1" zap;;
 	esac
 }
 
 START() {
 	filetext=${1#*squash_}
-	if CheckRunning "${1}" false :
-	then	TitleInfo "START-action of running ${filetext}"
-		Echo "START-action of running ${filetext}"
-	else	TitleInfo "START non-running ${filetext}"
-		Echo "STARTING non-running ${filetext}"
+	if CheckRunning "$1" false :
+	then	TitleInfo "START-action of running $filetext"
+		Echo "START-action of running $filetext"
+	else	TitleInfo "START non-running $filetext"
+		Echo "STARTING non-running $filetext"
 	fi
-	CallStart "${1}" START
+	CallStart "$1" START
 }
 
 Start() {
-	CheckRunning "${1}" false || return 0
+	CheckRunning "$1" false || return 0
 	filetext=${1#*squash_}
-	TitleInfo "start ${filetext}"
-	Echo "Starting ${filetext}..."
-	CallStart "${1}" start
+	TitleInfo "start $filetext"
+	Echo "Starting $filetext..."
+	CallStart "$1" start
 }
 
 Matchingji() {
 	case ${j#*_} in
-	${i})
-		test -L "${j}" && test -x "${j}" && return;;
+	$i)
+		test -L "$j" && test -x "$j" && return;;
 	esac
 	return 1
 }
 
 PushArray() {
 	eval pa__=\${${1}__:-0}
-	eval "${1}__${pa__}=\${2}
-	${1}__="'$(( ${pa__} + 1 ))'
+	eval "${1}__$pa__=\$2
+	${1}__="'$(( $pa__ + 1 ))'
 }
 
 InArray() {
 	eval "pa__=\${${1}__:-0}
-	"'while [ ${pa__} -gt 0 ]
-	do	pa__=$(( ${pa__} - 1 ))
-		eval [ \"\${${1}__${pa__}}\" = \"\${2}\" ] && return
+	"'while [ $pa__ -gt 0 ]
+	do	pa__=$(( $pa__ - 1 ))
+		eval [ \"\${${1}__$pa__}\" = \"\$2\" ] && return
 	done'
 	return 1
 }
 
 GetArray() {
-	eval ${1}=\${${2}__${3}}
+	eval $1=\${${2}__$3}
 }
 
 Doall() {
 	stat=0
 	nosave=false
-	case ${1} in
+	case $1 in
 	-*)
 		a=${1#-}
 		shift;;
 	*)
 		a=;;
 	esac
-	f=${1}
+	f=$1
 	shift
 	# first check all args:
 	max_len=0
@@ -467,62 +467,62 @@ Doall() {
 		for j in /etc/init.d/squash_*
 		do	Matchingji || continue
 			ifound=:
-			InArray inits "${j}" && continue
-			PushArray inits "${j}"
-			${alpha_order} && PushArray order "${j}"
+			InArray inits "$j" && continue
+			PushArray inits "$j"
+			$alpha_order && PushArray order "$j"
 			curr_len=${#j}
-			[ ${max_len} -lt ${curr_len} ] && max_len=${curr_len}
+			[ $max_len -lt $curr_len ] && max_len=$curr_len
 		done
-		${ifound} || Die "no executable symlink /etc/init.d/squash_${i}"
+		$ifound || Die "no executable symlink /etc/init.d/squash_$i"
 	done
-	if ${alpha_order}
+	if $alpha_order
 	then	inits__=0
 		for i in /etc/init.d/squash_*
-		do	InArray order "${i}" && PushArray inits "${i}"
+		do	InArray order "$i" && PushArray inits "$i"
 		done
 	fi
 	i=0
-	while [ ${i} -lt ${inits__} ]
-	do	GetArray j inits ${i}
-		i=$(( ${i} + 1 ))
-		if ${error_skip} && [ ${stat} -ne 0 ]
-		then	Echo "Skipping ${j} due to previous error"
+	while [ $i -lt $inits__ ]
+	do	GetArray j inits $i
+		i=$(( $i + 1 ))
+		if $error_skip && [ $stat -ne 0 ]
+		then	Echo "Skipping $j due to previous error"
 			continue
 		fi
-		${f} ${a} "${j}" || stat=${?}
+		$f $a "$j" || stat=$?
 	done
-	${nosave} && Echo "
+	$nosave && Echo "
 # changes are not re-squashed if either MAGICFILE exists or if
 # there are not enough changes to reach THRESHOLD.
 # To force re-squashing, remove MAGICFILE (usually DIR_CHANGE/.no-save)
 # or create an IGNORE_THRESHOLD file      (usually DIR_CHANGE/.do-save), resp.
 # The latter happens if you call \"${0##*/}\" with option -s.
 "
-	Exit ${stat}
+	Exit $stat
 }
 
-opt=${1}
-[ ${#} -eq 0 ] || shift
-[ ${#} -ne 0 ] || set -- '*'
-case ${opt} in
+opt=$1
+[ $# -eq 0 ] || shift
+[ $# -ne 0 ] || set -- '*'
+case $opt in
 stat*|sh*|[lpi]*)
-	Doall -status Status "${@}";;
+	Doall -status Status "$@";;
 STAT*)
-	Doall -STATUS Status "${@}";;
+	Doall -STATUS Status "$@";;
 R*)
-	Doall -RESTART Stop "${@}";;
+	Doall -RESTART Stop "$@";;
 re*)
-	Doall -restart Stop "${@}";;
+	Doall -restart Stop "$@";;
 sto*)
-	Doall -stop Stop "${@}";;
+	Doall -stop Stop "$@";;
 STO*)
-	Doall -STOP Stop "${@}";;
+	Doall -STOP Stop "$@";;
 z*)
-	Doall -zap Stop "${@}";;
+	Doall -zap Stop "$@";;
 star*)
-	Doall Start "${@}";;
+	Doall Start "$@";;
 STAR*)
-	Doall START "${@}";;
+	Doall START "$@";;
 *)
 	Usage;;
 esac
