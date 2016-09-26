@@ -109,7 +109,7 @@ kill_force=false
 titleopt=p
 alpha_order=false
 OPTIND=1
-while getopts 'sSnNfFkKeET:aAh?' opt
+while getopts 'sSnNfFkKeET:aAh' opt
 do	case $opt in
 	s)	save_force=:;;
 	S)	save_force=false;;
@@ -124,6 +124,7 @@ do	case $opt in
 	T)	titleopt=$titleopt$OPTARG;;
 	a)	alpha_order=:;;
 	A)	alpha_order=false;;
+	'?')	exit 1;;
 	*)	Usage 0;;
 	esac
 done

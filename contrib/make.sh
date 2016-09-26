@@ -32,12 +32,13 @@ jarg='-j3'
 enablepatch=false
 configure_extra='--prefix=/usr'
 OPTIND=1
-while getopts 'qnrj:hH?' opt
+while getopts 'qnrj:hH' opt
 do	case $opt in
 	q)	quiet=:;;
 	n)	earlystop=:;;
 	r)	use_chown=:;;
 	j)	jarg=${OPTARG:+-j}$OPTARG;;
+	'?')	exit 1;;
 	*)	Usage 0;;
 	esac
 done

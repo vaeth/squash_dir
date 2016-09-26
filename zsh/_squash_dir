@@ -15,7 +15,7 @@ _arguments -C -s -S -A '-*' : \
 '-F[cancel previous -f]' \
 '-K[cancel previous -k]' \
 '-A[cancel previous -a]' \
-'(1 * -)'{'-h','-\\?'}'[help]' \
+'(1 * -)-h[help]' \
 '1:cmds:->cmds' \
 '*:names:compadd -- /etc/init.d/squash_*(@:t:s/squash_/)'
 local ret=$?
