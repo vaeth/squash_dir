@@ -36,7 +36,6 @@ case $state in
 	'STATUS:execute status action also for non-running scripts'
 	'zap:zap squash_dir to stopped state'
 	)
-	_describe -t commands 'command' cmds
-	ret=$?;;
+	_describe -t commands 'command' cmds && ret=0;;
 esac
 return ret
