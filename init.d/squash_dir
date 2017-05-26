@@ -470,7 +470,7 @@ MvSqfsOld() {
 
 Rmdir() {
 	case ${1:-0} in
-	[0nNfF]*)
+	[nNfF]*|0|-)
 		return 0;;
 	*p*)
 		rmdirparent=:;;

@@ -1,5 +1,25 @@
 # ChangeLog for squash_dir
 
+*squash_dir-13.11
+	Martin Väth <martin at mvath.de>:
+	- Treat 0 and - as false only if no symbol follows
+
+*squash_dir-13.10
+	Martin Väth <martin at mvath.de>:
+	- Fix completion for >=zsh-5.3
+
+*squash_dir-13.9
+	Martin Väth <martin at mvath.de>:
+	- Fix getopts usage
+
+*squash_dir-13.8
+	Martin Väth <martin at mvath.de>:
+	- Remove redundant sh quoting
+
+*squash_dir-13.7
+	Martin Väth <martin at mvath.de>:
+	- Declare project as unmaintained
+
 *squash_dir-13.6
 	Martin Väth <martin at mvath.de>:
 	- Update emerge.sh to current portageq

@@ -395,7 +395,7 @@ DIR_CHANGE
 	variable empty.
 
 RM_DIR_CHANGE
-	If this variable is true (not empty, not 0 and does not start
+	If this variable is true (not empty, not 0 or - and does not start
 	with f,F,n,N), the script will remove DIR_CHANGE at stopping.
 	If it contains p or P also empty parents are removed.
 	RM_DIR_CHANGE defaults to "parents" if the temporary name
