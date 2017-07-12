@@ -232,7 +232,7 @@ $DISTDIR in a different directory in advance:
 It makes no sense (i.e. it costs enormous time and needs lot of temporary
 diskspace without much gain) to compress compressed tarballs. Hence:
 Move /usr/portage/distdir to some other place (outside the /usr/portage
-hierarchy) and modify DISTDIR in /etc/make.conf correspondingly,
+hierarchy) and modify DISTDIR in /etc/portage/make.conf correspondingly,
 before you start the initscripts for the first time.
 
 
@@ -353,7 +353,7 @@ DIRECTORY
 	be mounted, i.e. the path of the "original" directory.
 	If you want to use this script to compress your portage tree,
 	it might be a good idea to set this variables with
-	DIRECTORY=`. /etc/make.conf 2>/dev/null; printf '%s' "$PORTDIR"`
+	DIRECTORY=`. /etc/portage/make.conf 2>/dev/null; printf '%s' "$PORTDIR"`
 	or the slower but more portable
 	DIRECTORY="`portageq portdir`"
 
