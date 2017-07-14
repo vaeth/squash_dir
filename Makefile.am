@@ -60,9 +60,9 @@ install-data-local:
 	then	$(INSTALL_DATA) -D "$(srcdir)/zsh/_squash_dir" "$(DESTDIR)$(ZSH_COMPLETION)/_squash_dir" && \
 		$(INSTALL_WRAPPER) -D "$(srcdir)/zsh/_openrc-wrapper" "$(DESTDIR)$(ZSH_COMPLETION)/_openrc-wrapper" ; \
 	fi
-	$(AM_V_at)if test x"$(SYSTEMSYSTEMUNITDIR)" != x"" ; \
-	then	$(INSTALL_DATA) -D "$(srcdir)/systemd/squash_dir.service" "$(DESTDIR)$(SYSTEMSYSTEMUNITDIR)/squash_dir.service" && \
-		$(INSTALL_DATA) -D "$(srcdir)/systemd/squash_dir@.service" "$(DESTDIR)$(SYSTEMSYSTEMUNITDIR)/squash_dir@.service" ; \
+	$(AM_V_at)if test x"$(SYSTEMDSYSTEMUNITDIR)" != x"" ; \
+	then	$(INSTALL_DATA) -D "$(srcdir)/systemd/squash_dir.service" "$(DESTDIR)$(SYSTEMDSYSTEMUNITDIR)/squash_dir.service" && \
+		$(INSTALL_DATA) -D "$(srcdir)/systemd/squash_dir@.service" "$(DESTDIR)$(SYSTEMDSYSTEMUNITDIR)/squash_dir@.service" ; \
 	fi
 
 uninstall-local:
@@ -70,7 +70,7 @@ uninstall-local:
 	then	$(RM) "$(DESTDIR)$(ZSH_COMPLETION)/_squash_dir" && \
 		$(RM_WRAPPER) "$(DESTDIR)$(ZSH_COMPLETION)/_openrc-wrapper" ; \
 	fi
-	$(AM_V_at)if test x"$(SYSTEMSYSTEMUNITDIR)" != x"" ; \
-	then	$(RM) "$(DESTDIR)$(SYSTEMSYSTEMUNITDIR)/squash_dir.service" && \
-		$(RM) "$(DESTDIR)$(SYSTEMSYSTEMUNITDIR)/squash_dir@.service" ; \
+	$(AM_V_at)if test x"$(SYSTEMDSYSTEMUNITDIR)" != x"" ; \
+	then	$(RM) "$(DESTDIR)$(SYSTEMDSYSTEMUNITDIR)/squash_dir.service" && \
+		$(RM) "$(DESTDIR)$(SYSTEMDSYSTEMUNITDIR)/squash_dir@.service" ; \
 	fi

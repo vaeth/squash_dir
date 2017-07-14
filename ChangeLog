@@ -1,5 +1,9 @@
 # ChangeLog for squash_dir
 
+*squash_dir-13.13
+	Martin Väth <martin at mvath.de>:
+	- Fix installation paths (use systemd unitdir and remove split /usr)
+
 *squash_dir-13.12
 	Martin Väth <martin at mvath.de>:
 	- Update docs to use /etc/portage/make.conf instead of /etc/make.conf

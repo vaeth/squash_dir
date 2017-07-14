@@ -23,11 +23,12 @@ Call as root (after creating the corresponding directories if necessary):
 	cp -p init.d/squash_dir /etc/init.d
 	cp -p conf.d/squash_dir /etc/conf.d
 	cp -p sbin/* /usr/sbin
-	cp -p systemd/* /usr/lib/systemd/system
+	cp -p systemd/* \
+		"`pkg-config --variable=systemdsystemunitdir systemd`"
 	cp -p zsh/_squash_dir /usr/share/zsh/site-functions
 If you want to install the openrc-wrapper from here (instead of using the
 recommend way to install it from the openrc-wrapper project), use also
-	cp -p bin/* /usr/bin
+	cp -p bin/* /bin
 	cp -p zsh/_openrc-wrapper /usr/share/zsh/site-functions
 
 Here you can find the patches which redirect the progress bar of

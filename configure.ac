@@ -23,17 +23,18 @@ AS_VAR_IF([ZSH_COMPLETION], [],
 AC_SUBST([ZSH_COMPLETION])
 
 AC_MSG_CHECKING([systemd system units])
-AS_VAR_SET([SYSTEMSYSTEMUNITDIR], ["$libdir/systemd/system"])
+AS_VAR_SET([SYSTEMDSYSTEMUNITDIR],
+	["`pkg-config --variable=systemdsystemunitdir system 2>/dev/null || echo /lib/systemd/system`"])
 AC_ARG_WITH([systemdsystemunitdir],
 	[AS_HELP_STRING([--with-systemdsystemunitdir=STR],
 		[install systemd unit files in directory STR])],
 	[AS_CASE([$withval],
-		[/*], [AS_VAR_COPY([SYSTEMSYSTEMUNITDIR], [withval])],
-		[no], [AS_VAR_SET([SYSTEMSYSTEMUNITDIR], [])])])
-AS_VAR_IF([SYSTEMSYSTEMUNITDIR], [],
+		[/*], [AS_VAR_COPY([SYSTEMDSYSTEMUNITDIR], [withval])],
+		[no], [AS_VAR_SET([SYSTEMDSYSTEMUNITDIR], [])])])
+AS_VAR_IF([SYSTEMDSYSTEMUNITDIR], [],
 		[AC_MSG_RESULT([no])],
-		[AC_MSG_RESULT([yes, into $SYSTEMSYSTEMUNITDIR])])
-AC_SUBST([SYSTEMSYSTEMUNITDIR])
+		[AC_MSG_RESULT([yes, into $SYSTEMDSYSTEMUNITDIR])])
+AC_SUBST([SYSTEMDSYSTEMUNITDIR])
 
 AC_MSG_CHECKING([openrc wrapper])
 AS_VAR_SET([wrapper], [:])
