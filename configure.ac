@@ -77,15 +77,15 @@ AC_ARG_WITH([order],
 AC_MSG_RESULT([$order])
 
 AC_PROG_SED()
-AS_IF([["$SED" -e "s/[-a-z ]*  ([*])/$order  (*)/" README >|patching.tmp]],
+AS_IF([["$SED" -e "s/[-a-z ]*  ([*])/$order  (*)/" README.md >|patching.tmp]],
 	[],
-	[AC_MSG_ERROR(["sed for README failed"])])
-AS_IF([diff README patching.tmp],
+	[AC_MSG_ERROR(["sed for README.md failed"])])
+AS_IF([diff README.md patching.tmp],
 	[],
-	[AC_MSG_NOTICE([patching README])
-	AS_IF([cat patching.tmp >|README],
+	[AC_MSG_NOTICE([patching README.md])
+	AS_IF([cat patching.tmp >|README.md],
 		[],
-		[AC_MSG_ERROR(["cannot patch README"])])])
+		[AC_MSG_ERROR(["cannot patch README.md"])])])
 AS_IF([["$SED" -e "s/ORDER-[-a-z ]*/ORDER-$order/" init.d/squash_dir >|patching.tmp]],
 	[],
 	[AC_MSG_ERROR(["sed for init.d/squash_dir failed"])])
