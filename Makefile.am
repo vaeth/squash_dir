@@ -25,7 +25,7 @@ zsh/_squash_dir \
 $extra_dist_wrapper
 
 dist_doc_DATA = \
-README \
+README.md \
 AUTHORS \
 ChangeLog
 

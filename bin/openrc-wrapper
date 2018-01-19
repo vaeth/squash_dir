@@ -18,7 +18,7 @@ then	[ $# -eq 2 ] || Usage
 	exec >/dev/null
 else	[ $# -eq 1 ] || Usage
 fi
-PATH='/lib/rc/bin:'${PATH:-/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/bin}
+PATH='/lib64/rc/bin:/lib/rc/bin:'${PATH:-/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/bin}
 if ! command -v ebegin >/dev/null 2>&1
 then
 ebegin() {
